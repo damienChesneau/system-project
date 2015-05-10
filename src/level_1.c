@@ -18,11 +18,12 @@
 Level 1: Each repository has an execution of this program (multiple instances) and we must synchronize them.
 
  */
-
-
-int copy(int fd_out,int fd_in);
+typedef int (*Fd_open)(int,struct dirent*);
 int fd_open_out(int fd_in,struct dirent* file);
 int fd_open_in(int fd_out,struct dirent* file);
+
+int copy_all(int fd,Fd_open func);
+int copy(int fd_out,int fd_in);
 int isDirectory(struct dirent* info,char* path);
 int getServSockaddr(int port, struct sockaddr_in* serv);
 int getSocket(int port, struct sockaddr_in* serv);
@@ -170,7 +171,7 @@ int copy(int fd_in,int fd_out){
 	return EXIT_SUCCESS;
 }
 
-int copy_all(int fd_out){
+int copy_all(int fd,Fd_open func){
 		struct dirent ** reader;
 		int nb_file;
 		int i;
@@ -181,7 +182,7 @@ int copy_all(int fd_out){
 		}
 		
 		for(i = 0; i<nb_file; i++){
-			if(fd_open_in(fd_out,reader[i]) == EXIT_FAILURE){
+			if(func(fd,reader[i]) == EXIT_FAILURE){
 				perror("copy_all");
 				return EXIT_FAILURE;
 			}
