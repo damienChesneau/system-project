@@ -4,6 +4,7 @@
 #include<sys/types.h>
 #include<sys/socket.h>
 #include <netinet/in.h>
+#include<poll.h>
 #define PORT 3450 /* 3450 a 3650 */
 #define OFFSET 200
 /*
@@ -41,15 +42,39 @@ int main(int argc, char* argv[]) {
     	}
     	psock[i]= &sock[i];
     }
+    
     if(options == 0){
+    	
     	int client_fd[OFFSET];
+    	struct pollfd multi_fd[OFFSET];
     	socklen_t addrlen[OFFSET]; 
+    	
     	for(i = 0; i<OFFSET; i++){
+    		
     		addrlen[i] = sizeof(struct sockaddr_in);
     		client_fd[i] = accept(sock_fd[i],(struct sockaddr*)psock[i],&addrlen[i]);
+    		
     		if(client_fd[i] == EXIT_FAILURE){
     			perror(argv[0]);
     			return EXIT_FAILURE;
+    		}
+    		
+    		multi_fd[i].fd = client_fd[i];
+    		multi_fd[i].events = POLLIN | POLLPRI;
+    	}
+    	
+    	int state = poll(multi_fd,OFFSET,-1);
+    	
+    	if(state>0){
+    		for(i = 0; i<OFFSET; i++){
+    			
+    			if(multi_fd[i].revents & POLLIN){
+    			
+    			}
+    			
+    			if(multi_fd[i].revents  & POLLPRI){
+    			
+    			}
     		}
     	}
     }else{
