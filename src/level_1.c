@@ -11,8 +11,7 @@
 #include<poll.h>
 #include<dirent.h>
 #include<unistd.h>
-#define PORT 3450 /* 3450 a 3650 */
-#define OFFSET 200
+#define PORT 2000 /* 3450 a 3650 */
 #define BUF 256
 /*
 Level 1: Each repository has an execution of this program (multiple instances) and we must synchronize them.
@@ -33,10 +32,9 @@ int main(int argc, char* argv[]) {
     char options = 0;
     char* optstring = "d:";
     int val;
-    int sock_fd[OFFSET];
-   	struct sockaddr_in sock[OFFSET];
-   	struct sockaddr_in* psock[OFFSET]; 
-    int i;
+    int sock_fd;
+   	struct sockaddr_in sock;
+   	struct sockaddr_in* psock; 
 
     while (EOF != (val = getopt(argc, argv, optstring))) {
         switch (val) {
@@ -47,39 +45,33 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    for(i = 0; i<OFFSET; i++){
-    	sock_fd[i] = getSocket(PORT+i,&sock[i]);
-    	if(sock_fd[i] == EXIT_FAILURE){
+    sock_fd = getSocket(PORT+1,&sock);
+    if(sock_fd == EXIT_FAILURE){
+    	perror(argv[0]);
+    		return EXIT_FAILURE;
+    }
+    psock= &sock;
+    
+    if(argc > 1){
+    	
+    	int client_fd;
+    	/*struct pollfd multi_fd[1];*/
+    	client_fd = connect(sock_fd,(struct sockaddr*)psock,sizeof(struct sockaddr_in));
+    		
+    	if(client_fd == EXIT_FAILURE){
     		perror(argv[0]);
     		return EXIT_FAILURE;
     	}
-    	psock[i]= &sock[i];
-    }
-    
-    if(options == 0){
     	
-    	int client_fd[OFFSET];
-    	struct pollfd multi_fd[OFFSET];
-    	socklen_t addrlen[OFFSET]; 
+    	write(client_fd,"UVGJHB",6);
+    		
+    	/*multi_fd[0].fd = client_fd;
+    	multi_fd[0].events = POLLIN | POLLPRI;
     	
-    	for(i = 0; i<OFFSET; i++){
-    		
-    		addrlen[i] = sizeof(struct sockaddr_in);
-    		client_fd[i] = accept(sock_fd[i],(struct sockaddr*)psock[i],&addrlen[i]);
-    		
-    		if(client_fd[i] == EXIT_FAILURE){
-    			perror(argv[0]);
-    			return EXIT_FAILURE;
-    		}
-    		
-    		multi_fd[i].fd = client_fd[i];
-    		multi_fd[i].events = POLLIN | POLLPRI;
-    	}
-    	
-    	int state = poll(multi_fd,OFFSET,-1);
+    	int state = poll(multi_fd,1,-1);
     	
     	if(state>0){
-    		for(i = 0; i<OFFSET; i++){
+    		for(i = 0; i<1; i++){
     			
     			if(multi_fd[i].revents & POLLIN){
     			
@@ -89,16 +81,19 @@ int main(int argc, char* argv[]) {
     			
     			}
     		}
-    	}
+    	}*/
     }else{
-    	for(i = 0; i<OFFSET; i++){
-    		int serv_fd = connect(sock_fd[i],(struct sockaddr*)psock[i],sizeof(struct sockaddr_in));
-    		if(serv_fd == EXIT_FAILURE){
-    			/*There we must test if the port is already used or not */
-    			perror(argv[0]);
-    			return EXIT_FAILURE;
-    		}
+    	socklen_t addrlen; 
+    	
+    	addrlen = sizeof(struct sockaddr_in);
+    	int serv_fd = accept(sock_fd,(struct sockaddr*)psock,&addrlen);
+    	if(serv_fd == EXIT_FAILURE){
+    		perror(argv[0]);
+    		return EXIT_FAILURE;
     	}
+    	char buff_2[10];
+    	read(serv_fd,buff_2,6);
+    	printf(buff_2);
     }
     
     return EXIT_SUCCESS;
