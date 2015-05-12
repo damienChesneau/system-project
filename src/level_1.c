@@ -28,17 +28,12 @@ int main(int argc, char* argv[]) {
 		  	return EXIT_FAILURE;
 		  }
 		  
-			while(1){
-				int newSock = accept(socket_fd, NULL, NULL);
-				/*printf("Bonjour\n");*/
-				if(newSock != EXIT_FAILURE){
-					while(1){
-					char buff[10];
-					read(newSock, buff, 10);
-					printf("%s\n",buff);
-					}
-				}
-			}
+			int newSock = accept(socket_fd, NULL, NULL);
+			if(newSock != EXIT_FAILURE){
+				char buff[10];
+				read(newSock, buff, 10);
+				printf("%s\n",buff);
+			}	
     }else{
     	if(inet_aton(ip_addr,&(addr.sin_addr.s_addr)) == -1){
 				perror(argv[0]);
