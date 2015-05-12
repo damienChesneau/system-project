@@ -5,5 +5,5 @@ typedef struct data {
     char * data; /* FILE DATA */
 } Data;
 
-Data * decode(char * data);
+Data * decode(const char * data);
 char * encode(Data * data, int length);
