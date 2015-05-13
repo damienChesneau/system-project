@@ -6,19 +6,20 @@
 #include "../src/parser.h"
 
 int main(int argc, char** argv) {
-    Data data[2];
-    data[0].data="dfghjkl\0";
-    strcpy(data[0].path ,"hellof1\0");
+    Data * data = (Data *) malloc(sizeof(Data)*3);
+    data[0].data="dfghjkl";
+    strcpy(data[0].path ,"hellof1");
     data[0].timestamp = 2020;
-    data[1].data="sfdddddddddddddddd\0";
-    strcpy(data[1].path ,"hellf2\0");
+    data[1].data="sfdddddddddddddddd";
+    strcpy(data[1].path ,"hellf2");
     data[1].timestamp = 5454;
-    data[2].data="sdddsdsddddddddddddddddddd\0";
-    strcpy(data[2].path ,"hellof3\0");
+    data[2].data="sdddsdsddddddddddddddddddd";
+    strcpy(data[2].path ,"hellof3");
     data[2].timestamp = 4545;
+		
     char * z = encode(data,3);
     printf("RES= %s\n", z);
-    
+
     Data * datatoret;
     datatoret = decode(z);
     printf("TEST=%s\n", datatoret[0].path);

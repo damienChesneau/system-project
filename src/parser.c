@@ -8,7 +8,7 @@ char* appendTo(const char * dest, const char *s) {
     int destLen = strlen(dest);
     int totalLength = sLength + destLen;
 
-    char * strBuf = (char*) malloc(totalLength + 1);
+    char * strBuf = (char*) malloc(sizeof(char)*(totalLength+1));
     strcpy(strBuf, dest);
     strcpy(strBuf + destLen, s);
     dest = strBuf;
@@ -22,7 +22,6 @@ char* encode(Data * data, int length) {
         d = appendTo(d, "[#");
         d = appendTo(d, data[i].path);
         char buf[255];
-        int n = 0;
         sprintf(buf, "%d", data[i].timestamp);
         d = appendTo(d, "#");
         d = appendTo(d, buf);
@@ -40,7 +39,7 @@ char* encode(Data * data, int length) {
 Data * decode(const char * data) {
     int length = (int) strlen(data);
     char * newData = (char*) &data[0];
-    int i = 0, nb_of_data = 0, nb_of_sharps;
+    int i = 0, nb_of_data = 0, nb_of_sharps = 0;
     char path [200];
     path[199] = '\0';
     int pos1, pos2, pos3=0, occurs = 0;
@@ -64,6 +63,7 @@ Data * decode(const char * data) {
                     int len = i - pos1;
                     strncpy(path, &newData[pos1], len);
                     path[len] = '\0';
+                    
                     strncpy(datatoret[occurs].path, path, strlen(path) + 1);
                     break;
                 case 3:
