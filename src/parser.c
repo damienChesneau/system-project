@@ -54,7 +54,6 @@ Data * decode(const char * data) {
     for (i = 0; i < length; i++) {
         if (newData[i] == '#') {
             nb_of_sharps++;
-            printf("%d\n",nb_of_sharps);
             switch (nb_of_sharps) {
                 case 1:
                     pos1 = i + 1;
