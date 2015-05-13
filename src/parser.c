@@ -43,8 +43,8 @@ Data * decode(const char * data) {
     int i = 0, nb_of_data = 0, nb_of_sharps;
     char path [200];
     path[199] = '\0';
-    int pos1, pos2, pos3 = 0, occurs = 0;
-
+    int pos1, pos2, pos3=0, occurs = 0;
+    
     for (i = 0; i < length; i++) {
         if (newData[i] == '[') {
             nb_of_data++;
