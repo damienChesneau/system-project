@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
+
+#include "parser.h"
 
 #define PORT 2000 /* 3450 a 3650 */
 #define BUF 256
@@ -16,45 +19,59 @@ Level 1: Each repository has an execution of this program (multiple instances) a
 int setAcceptSocket(struct sockaddr_in* serv, int socket_fd);
 int getSockAddr(int port, struct sockaddr_in* serv);
 const char* ip_addr = "127.0.0.1";
+const char* firstmessage = "Hello, I want all your data please :)";
 int port_now = PORT;
 void * connexion_manager(void *arg);
 
-void * connectman(void *arg){
-		char **tab_addr = (char **)arg;
-		int nb_ip = 0;
-		while(tab_addr[nb_ip] != NULL){
-			nb_ip++;
-		}
-		
+void * connectman(void *arg) {
+    char **tab_addr = (char **) arg;
+    int nb_ip = 0;
+    while (tab_addr[nb_ip] != NULL) {
+        nb_ip++;
+    }
+
     struct sockaddr_in addr[nb_ip];
     int socket_fd[nb_ip];
-		pthread_t new_manager[nb_ip];
+    pthread_t new_manager[nb_ip];
     int i = 0;
-    for(i = 0; i<nb_ip;i++){
-		  socket_fd[i] = socket(AF_INET, SOCK_STREAM, 0);
-		  if (getSockAddr(PORT, &(addr[i])) == EXIT_FAILURE) {
-		      perror("GET SOCK ADDR");
-		      return (void *) EXIT_FAILURE;
-		  }
-		  
-		  if (inet_aton(tab_addr[i], &(addr[i].sin_addr.s_addr)) == -1) {
-		  	perror("cnonnectman");
-		  	return (void*) EXIT_FAILURE;
-		  }
-		  
-		  if (connect(socket_fd[i], (struct sockaddr *) &(addr[i]), sizeof (struct sockaddr)) != EXIT_FAILURE) {
-		 		/*perror("connectman");
-		  	return (void*) EXIT_FAILURE;*/
-				if (pthread_create(&(new_manager[i]), NULL, connexion_manager, (void*)(intptr_t) socket_fd) == -1) {
-				  perror("pthread_create");
-				  return (void*) EXIT_FAILURE;
-				}
-			}else{
-				new_manager[i] == -1;
-			}
-		}
-    for(i = 0; i<nb_ip;i++){
+    for (i = 0; i < nb_ip; i++) {
+        socket_fd[i] = socket(AF_INET, SOCK_STREAM, 0);
+        if (getSockAddr(PORT, &(addr[i])) == EXIT_FAILURE) {
+            perror("GET SOCK ADDR");
+            return (void *) EXIT_FAILURE;
+        }
+
+        if (inet_aton(tab_addr[i], &(addr[i].sin_addr.s_addr)) == -1) {
+            perror("cnonnectman");
+            return (void*) EXIT_FAILURE;
+        }
+        char buf[10000];
+        if (connect(socket_fd[i], (struct sockaddr *) &(addr[i]), sizeof (struct sockaddr)) != -1) {
+            write(socket_fd[i], firstmessage, strlen(firstmessage));
+            read(socket_fd[i], buf, sizeof (buf));
+            Data * data = decode(buf);
+        } else {
+            new_manager[i] == -1;
+        }
+    }
+    for (i = 0; i < nb_ip; i++) {
         sleep(500000);
+    }
+    pthread_exit(NULL);
+}
+
+void * connexion_manager(void *arg) {
+    int newSock = (intptr_t) arg;
+    if (newSock != EXIT_FAILURE) {
+        char buff[10000];
+        read(newSock, buff, sizeof (buff));
+        if (strcmp(buff, firstmessage) == 0) {
+            /*TO DO HERE 
+             CONSTRUCT STRUCT DATA*/
+            char * dataencoded = encode(NULL, 0);
+            write(newSock, dataencoded, strlen(dataencoded));
+        }
+        printf("%s\n", buff);
     }
     pthread_exit(NULL);
 }
@@ -63,7 +80,7 @@ void * switchman(void *arg) {
     (void) arg;
     struct sockaddr_in addr;
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (getSockAddr(PORT , &addr) == EXIT_FAILURE) {
+    if (getSockAddr(PORT, &addr) == EXIT_FAILURE) {
         perror("GET SOCK ADDR");
         return (void *) EXIT_FAILURE;
     }
@@ -77,20 +94,10 @@ void * switchman(void *arg) {
         int newSock = accept(socket_fd, NULL, NULL);
         pthread_t new_manager;
 
-        if (pthread_create(&new_manager, NULL, connexion_manager, (void*)(intptr_t) newSock) == -1) {
+        if (pthread_create(&new_manager, NULL, connexion_manager, (void*) (intptr_t) newSock) == -1) {
             perror("pthread_create");
             return (void*) EXIT_FAILURE;
         }
-    }
-    pthread_exit(NULL);
-}
-
-void * connexion_manager(void *arg) {
-    int newSock = (intptr_t) arg;
-    if (newSock != EXIT_FAILURE) {
-        char buff[10];
-        read(newSock, buff, 10);
-        printf("%s\n", buff);
     }
     pthread_exit(NULL);
 }
@@ -101,7 +108,7 @@ int main(int argc, char* argv[]) {
         perror("pthread_create");
         return EXIT_FAILURE;
     }
-    while (1){
+    while (1) {
         sleep(500000);
     }
     /*        if (inet_aton(ip_addr, &(addr.sin_addr.s_addr)) == -1) {
