@@ -8,7 +8,7 @@ char* appendTo(const char * dest, const char *s) {
     int destLen = strlen(dest);
     int totalLength = sLength + destLen;
 
-    char * strBuf = (char*) malloc(totalLength + 1);
+    char * strBuf = (char*) malloc(sizeof(char)*(totalLength+1));
     strcpy(strBuf, dest);
     strcpy(strBuf + destLen, s);
     dest = strBuf;
@@ -40,7 +40,7 @@ char* encode(Data * data, int length) {
 Data * decode(const char * data) {
     int length = (int) strlen(data);
     char * newData = (char*) &data[0];
-    int i = 0, nb_of_data = 0, nb_of_sharps;
+    int i = 0, nb_of_data = 0, nb_of_sharps = 0;
     char path [200];
     path[199] = '\0';
     int pos1, pos2, pos3=0, occurs = 0;
@@ -55,6 +55,7 @@ Data * decode(const char * data) {
     for (i = 0; i < length; i++) {
         if (newData[i] == '#') {
             nb_of_sharps++;
+            printf("%d\n",nb_of_sharps);
             switch (nb_of_sharps) {
                 case 1:
                     pos1 = i + 1;
@@ -64,6 +65,7 @@ Data * decode(const char * data) {
                     int len = i - pos1;
                     strncpy(path, &newData[pos1], len);
                     path[len] = '\0';
+                    
                     strncpy(datatoret[occurs].path, path, strlen(path) + 1);
                     break;
                 case 3:
