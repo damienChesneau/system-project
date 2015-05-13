@@ -34,7 +34,6 @@ void * switchman(void *arg) {
     while (1) {
         printf("WAIT NEW CONNEXION...\n");
         int newSock = accept(socket_fd, NULL, NULL);
-        printf
         pthread_t new_manager;
 
         if (pthread_create(&new_manager, NULL, connexion_manager, (void*)(intptr_t) newSock) == -1) {
