@@ -1,4 +1,4 @@
-all: dir level_1_test 
+all: clean dir level_1_test 
 
 level_1_test: lparser
 	gcc src/level_1.c lparser.o -Wall -ansi -o ./bin/level_1  -lpthread

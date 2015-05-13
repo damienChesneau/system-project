@@ -17,6 +17,47 @@ int setAcceptSocket(struct sockaddr_in* serv, int socket_fd);
 int getSockAddr(int port, struct sockaddr_in* serv);
 const char* ip_addr = "127.0.0.1";
 int port_now = PORT;
+void * connexion_manager(void *arg);
+
+void * connectman(void *arg){
+		char **tab_addr = (char **)arg;
+		int nb_ip = 0;
+		while(tab_addr[nb_ip] != NULL){
+			nb_ip++;
+		}
+		
+    struct sockaddr_in addr[nb_ip];
+    int socket_fd[nb_ip];
+		pthread_t new_manager[nb_ip];
+    int i = 0;
+    for(i = 0; i<nb_ip;i++){
+		  socket_fd[i] = socket(AF_INET, SOCK_STREAM, 0);
+		  if (getSockAddr(PORT, &(addr[i])) == EXIT_FAILURE) {
+		      perror("GET SOCK ADDR");
+		      return (void *) EXIT_FAILURE;
+		  }
+		  
+		  if (inet_aton(tab_addr[i], &(addr[i].sin_addr.s_addr)) == -1) {
+		  	perror("cnonnectman");
+		  	return (void*) EXIT_FAILURE;
+		  }
+		  
+		  if (connect(socket_fd[i], (struct sockaddr *) &(addr[i]), sizeof (struct sockaddr)) != EXIT_FAILURE) {
+		 		/*perror("connectman");
+		  	return (void*) EXIT_FAILURE;*/
+				if (pthread_create(&(new_manager[i]), NULL, connexion_manager, (void*)(intptr_t) socket_fd) == -1) {
+				  perror("pthread_create");
+				  return (void*) EXIT_FAILURE;
+				}
+			}else{
+				new_manager[i] == -1;
+			}
+		}
+    for(i = 0; i<nb_ip;i++){
+        sleep(500000);
+    }
+    pthread_exit(NULL);
+}
 
 void * switchman(void *arg) {
     (void) arg;
