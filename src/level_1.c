@@ -1,3 +1,6 @@
+#define _BSD_SOURCE  1
+
+#define _SVID_SOURCE 1
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -27,13 +30,12 @@ void * connectman(void *arg) {
     char **tab_addr = (char **) arg;
     int nb_ip = 0;
     while (tab_addr[nb_ip] != NULL) {
-        printf("%s\n", tab_addr[nb_ip]);
         nb_ip++;
     }
 
     struct sockaddr_in addr[nb_ip];
     int socket_fd[nb_ip];
-    int i = 0;
+    int i = 0;    	
     for (i = 0; i < nb_ip; i++) {
 
         socket_fd[i] = socket(AF_INET, SOCK_STREAM, 0);
@@ -46,19 +48,29 @@ void * connectman(void *arg) {
             perror("cnonnectman");
             return (void*) EXIT_FAILURE;
         }
-        printf("OK %d\n", nb_ip);
         char buf[10000];
         if (connect(socket_fd[i], (struct sockaddr *) &(addr[i]), sizeof (struct sockaddr)) != -1) {
             write(socket_fd[i], firstmessage, strlen(firstmessage));
-            read(socket_fd[i], buf, sizeof (buf));
-            Data * data = decode(buf);
-
+            if(read(socket_fd[i], buf, sizeof (buf)) == -1){
+            	perror("connectman");
+            }
+            int nb_file = atoi(buf);
+            int i;
+            printf("%d\n",nb_file);
+            for(i = 0; i<nb_file; i++){
+				if(read(socket_fd[i], buf, sizeof (buf)) == -1){
+					perror("connectman");
+				}	
+         		printf("%s\n",buf);
+            }
+            /*Data * data = decode(buf);*/
         }
     }
     pthread_exit(NULL);
 }
 
 void * connexion_manager(void *arg) {
+
     int newSock = (intptr_t) arg;
     if (newSock != EXIT_FAILURE) {
         char buff[10000];
@@ -66,10 +78,23 @@ void * connexion_manager(void *arg) {
         if (strcmp(buff, firstmessage) == 0) {
             /*TO DO HERE 
              CONSTRUCT STRUCT DATA*/
-            char * dataencoded = encode(NULL, 0);
-            write(newSock, dataencoded, strlen(dataencoded));
+           /* char * dataencoded = encode(NULL, 0);*/
+            struct dirent ** reader;
+			int nb_file;
+			if ((nb_file = scandir("./", &reader, NULL, alphasort)) == EXIT_FAILURE) {
+					perror("copy_all");
+					return (void *)EXIT_FAILURE;
+			}
+			snprintf(buff,10000,"%d",nb_file);
+			int i;
+			write(newSock,buff,strlen(buff));
+			
+			for(i = 0; i<nb_file; i++){
+				write(newSock,reader[i]->d_name,strlen(reader[i]->d_name));
+			}
+            /*write(newSock, dataencoded, strlen(dataencoded));*/
         }
-        printf("%s\n", buff);
+        /*printf("%s\n", buff);*/
     }
     pthread_exit(NULL);
 }
@@ -101,28 +126,27 @@ void * switchman(void *arg) {
 }
 
 int main(int argc, char* argv[]) {
-    int z = 0; 
-    get_data_form_dir("./",  &z);
+    /*int z = 0; 
+    get_data_form_dir("./",  &z);*/
 
+	
+	char ** ips = (char **) malloc(sizeof(char *)*argc);
     pthread_t thread1;
-    if (argc < 2) {
-        if (pthread_create(&thread1, NULL, switchman, NULL) == -1) {
-            perror("pthread_create");
-            return EXIT_FAILURE;
-        }
-    } else {
-        char * ips[argc];
-        int i = 0;
-        for (i = 1; i < argc; i++) {
-            ips[i - 1] = (char *) malloc(sizeof (char)*strlen(argv[i]));
-            strcpy(ips[i - 1], argv[i]);
-        }
-        ips[argc] = NULL;
-        if (pthread_create(&thread1, NULL, connectman, ips) == -1) {
-            perror("pthread_create");
-            return EXIT_FAILURE;
-        }
-    }
+    if (argc < 2){
+		if (pthread_create(&thread1, NULL, switchman, NULL) == -1) {
+		    perror("pthread_create");
+		    return EXIT_FAILURE;
+		}
+	}else {
+	
+		int i = 0;
+	  	for(i = 1; i<argc; i++){
+			ips[i - 1] = (char *)malloc(sizeof(char)*strlen(argv[i]));
+			strcpy(ips[i-1],argv[i]);
+	  	}
+	  	ips[argc] = NULL;
+	  	connectman(ips);
+	}
     while (1) {
         sleep(1000);
     }
