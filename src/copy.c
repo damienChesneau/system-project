@@ -1,5 +1,6 @@
-#define _BSD_SOURCE  1
-#define _SVID_SOURCE 1
+/*#define _BSD_SOURCE  1
+
+#define _SVID_SOURCE 1*/
 #include<stdio.h>
 #include<stdlib.h>
 #include<sys/types.h>
@@ -7,11 +8,7 @@
 #include<fcntl.h>
 #include<unistd.h>
 #include"copy.h"
-
-int main() {
-
-    return 0;
-}
+#include <errno.h>
 
 int fd_open_out(int fd_in, struct dirent* file) {
     int fd_out;
@@ -112,3 +109,82 @@ int isDirectory(struct dirent* info, char* path) {
     return 0;
 }
 
+int count_dir_files(const char * dir) {
+    int nbr = 0;
+    DIR * repertory = opendir(dir);
+    if (!repertory) {
+        perror("opendir() failed");
+    } else {
+        struct dirent * readedFile = NULL;
+        errno = 0;
+        int i = 0;
+        while (readedFile = readdir(repertory)) {
+            if (strcmp(readedFile->d_name, ".") != 0 && strcmp(readedFile->d_name, "..") != 0) {
+                nbr++;
+            }
+        }
+        if (errno) {
+            perror("readdir() failed");
+        }
+    }
+    return nbr;
+}
+
+char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
+    DIR * repertory = opendir(dir);
+
+
+    if (!repertory) {
+        perror("opendir() failed");
+    } else {
+        struct dirent * readedFile = NULL;
+        errno = 0;
+        int i = 0;
+        while (readedFile = readdir(repertory)) {
+            if (strcmp(readedFile->d_name, ".") != 0 && strcmp(readedFile->d_name, "..") != 0) {
+                files[i] = readedFile->d_name;
+                i++;
+            }
+        }
+        if (errno) {
+            perror("readdir() failed");
+        }
+    }
+    //    return (char**) files;
+    return NULL;
+}
+
+void get_data_from_file(const char * filename, char ** buffer) {
+
+    long length;
+    FILE * f = fopen(filename, "rb");
+
+    if (f) {
+        fseek(f, 0, SEEK_END);
+        length = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        *buffer = malloc(length);
+        if (*buffer) {
+            fread(*buffer, 1, length, f);
+        }
+        fclose(f);
+    }
+}
+
+Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
+    int count = count_dir_files(dir);
+    int i = 0;
+    char * files[count];
+    char** t = get_all_files_from_dir(dir, count, files);
+    for (i = 0; i < count; i++) {
+        printf("%s\n", files[i]);
+        char * buffer = 0;
+        get_data_from_file(files[i], &buffer);
+        if (buffer) {
+            printf("##################################\n");
+            printf("%s\n", buffer);
+            printf("##################################\n");
+        }
+    }
+    return NULL;
+}
