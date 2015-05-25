@@ -17,7 +17,7 @@ char* appendTo(const char * dest, const char *s) {
 
 char* encode(Data * data, int length) {
     char * d = "{";
-    int i = 0;
+    int i = 0; printf("ok\n");
     for (i = 0; i < length; i++) {
         d = appendTo(d, "[#");
         d = appendTo(d, data[i].path);
@@ -36,7 +36,7 @@ char* encode(Data * data, int length) {
     return d;
 }
 
-Data * decode(const char * data) {
+Data * decode(const char * data,int * nb) {
     int length = (int) strlen(data);
     char * newData = (char*) &data[0];
     int i = 0, nb_of_data = 0, nb_of_sharps = 0;
@@ -49,7 +49,7 @@ Data * decode(const char * data) {
             nb_of_data++;
         }
     }
-
+    *nb = nb_of_data;
     Data * datatoret = (Data *)malloc(sizeof (Data) * nb_of_data);
     for (i = 0; i < length; i++) {
         if (newData[i] == '#') {

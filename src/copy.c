@@ -1,15 +1,16 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "copy.h"
+#include <errno.h>
+#include <string.h>
+
 #define _BSD_SOURCE  1
 
 #define _SVID_SOURCE 1
-#include<stdio.h>
-#include<stdlib.h>
-#include<sys/types.h>
-#include<sys/stat.h>
-#include<fcntl.h>
-#include<unistd.h>
-#include"copy.h"
-#include <errno.h>
-#include <string.h>
 int get_timestamp_of_file(char * filename);
 
 int fd_open_out(int fd_in, struct dirent* file) {
@@ -170,7 +171,7 @@ void get_data_from_file(const char * filename, char ** buffer) {
     }
 }
 
-void get_data_form_dir(const char * dir, int * nb_of_datas, Data * test) {
+Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
     int count = count_dir_files(dir);
     int i = 0;
     *nb_of_datas = count;
@@ -184,19 +185,19 @@ void get_data_form_dir(const char * dir, int * nb_of_datas, Data * test) {
     char** t = get_all_files_from_dir(new_dir, count, files);
     for (i = 0; i < count; i++) {
         char * buffer = 0;
-        char tmp[255];
+        char tmp[255]; 
         strcpy(tmp, new_dir);
         strcat(tmp, files[i]);
         strcpy(datas[i].path, files[i]);
 
         get_data_from_file(tmp, &buffer);
         datas[i].data = buffer;
-        datas[i].data = malloc(strlen(buffer)+1);
-        strcpy(datas[i].data, buffer);
-        int current_timestamp = get_timestamp_of_file(tmp);
-        datas[i].timestamp = current_timestamp;
-    }
-    test = datas;
+        datas[i].data = malloc(strlen(buffer)+10);
+        strcpy(datas[i].data, buffer); 
+        int current_timestamp = get_timestamp_of_file(tmp); 
+        datas[i].timestamp = current_timestamp; 
+    }   
+    return datas;
 }
 
 int get_timestamp_of_file(char * filename) {
@@ -204,4 +205,7 @@ int get_timestamp_of_file(char * filename) {
     int ierr = stat(filename, &st);
     int newdate = st.st_mtime;
     return newdate;
+}
+void filter_and_replace(Data * data, int length){
+    /*Data* get_data_form_dir(const char * dir, int * nb_of_datas)*/
 }
