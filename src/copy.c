@@ -134,8 +134,6 @@ int count_dir_files(const char * dir) {
 
 char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
     DIR * repertory = opendir(dir);
-
-
     if (!repertory) {
         perror("opendir() failed");
     } else {
@@ -157,7 +155,6 @@ char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
 }
 
 void get_data_from_file(const char * filename, char ** buffer) {
-
     long length;
     FILE * f = fopen(filename, "rb");
 
@@ -173,33 +170,33 @@ void get_data_from_file(const char * filename, char ** buffer) {
     }
 }
 
-Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
+void get_data_form_dir(const char * dir, int * nb_of_datas, Data * test) {
     int count = count_dir_files(dir);
     int i = 0;
+    *nb_of_datas = count;
     char new_dir[255];
     strcpy(new_dir, dir);
     if (new_dir[strlen(new_dir) - 1] != '/') {
-        strcat(new_dir,"/");
+        strcat(new_dir, "/");
     }
     Data datas[count];
     char * files[count];
     char** t = get_all_files_from_dir(new_dir, count, files);
     for (i = 0; i < count; i++) {
-        printf("%s\n", files[i]);
         char * buffer = 0;
         char tmp[255];
-
         strcpy(tmp, new_dir);
         strcat(tmp, files[i]);
-        printf("%s\n", tmp);
+        strcpy(datas[i].path, files[i]);
+
         get_data_from_file(tmp, &buffer);
-        //        if (buffer) {
-        printf("##################################\n");
-        printf("%s\n", buffer);
-        printf("##################################\n");
-        //        }
+        datas[i].data = buffer;
+        datas[i].data = malloc(strlen(buffer)+1);
+        strcpy(datas[i].data, buffer);
+        int current_timestamp = get_timestamp_of_file(tmp);
+        datas[i].timestamp = current_timestamp;
     }
-    return NULL;
+    test = datas;
 }
 
 int get_timestamp_of_file(char * filename) {

@@ -12,4 +12,4 @@ int copy_all(int fd,Fd_open func);
 int copy(int fd_out,int fd_in);
 int isDirectory(struct dirent* info,char* path);
 
-Data* get_data_form_dir(const char * dir, int * nb_of_datas);
+void get_data_form_dir(const char * dir, int * nb_of_datas, Data * datas);

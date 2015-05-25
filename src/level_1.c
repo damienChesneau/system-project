@@ -126,9 +126,12 @@ void * switchman(void *arg) {
 }
 
 int main(int argc, char* argv[]) {
-    int z = 0; 
-    get_data_form_dir("./files_to_sync",  &z);
-
+    int nb = 0, i = 0;
+    Data * data = NULL;
+    get_data_form_dir("./files_to_sync", &nb, data); 
+    for (i = 0; i < nb; i++) { /* bug herer */ 
+        printf("---------------------%s\n", data[i].data);
+    }
 
     char ** ips = (char **) malloc(sizeof (char *)*argc);
     pthread_t thread1;
