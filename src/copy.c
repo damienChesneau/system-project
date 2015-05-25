@@ -9,6 +9,8 @@
 #include<unistd.h>
 #include"copy.h"
 #include <errno.h>
+#include <string.h>
+int get_timestamp_of_file(char * filename);
 
 int fd_open_out(int fd_in, struct dirent* file) {
     int fd_out;
@@ -174,17 +176,35 @@ void get_data_from_file(const char * filename, char ** buffer) {
 Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
     int count = count_dir_files(dir);
     int i = 0;
+    char new_dir[255];
+    strcpy(new_dir, dir);
+    if (new_dir[strlen(new_dir) - 1] != '/') {
+        strcat(new_dir,"/");
+    }
+    Data datas[count];
     char * files[count];
-    char** t = get_all_files_from_dir(dir, count, files);
+    char** t = get_all_files_from_dir(new_dir, count, files);
     for (i = 0; i < count; i++) {
         printf("%s\n", files[i]);
         char * buffer = 0;
-        get_data_from_file(files[i], &buffer);
-        if (buffer) {
-            printf("##################################\n");
-            printf("%s\n", buffer);
-            printf("##################################\n");
-        }
+        char tmp[255];
+
+        strcpy(tmp, new_dir);
+        strcat(tmp, files[i]);
+        printf("%s\n", tmp);
+        get_data_from_file(tmp, &buffer);
+        //        if (buffer) {
+        printf("##################################\n");
+        printf("%s\n", buffer);
+        printf("##################################\n");
+        //        }
     }
     return NULL;
+}
+
+int get_timestamp_of_file(char * filename) {
+    struct stat st;
+    int ierr = stat(filename, &st);
+    int newdate = st.st_mtime;
+    return newdate;
 }
