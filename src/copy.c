@@ -13,6 +13,45 @@
 #define _SVID_SOURCE 1
 int get_timestamp_of_file(char * filename);
 
+int get_mode(char * filename) {
+    struct stat st;
+    if(stat(filename, &st) == -1){
+    	perror("get_mode");
+    	return EXIT_FAILURE;
+    }
+    return st.st_mode;
+}
+
+int update_folder(char * dir,Data * data, int size){
+	int i = 0;
+	for(i = 0; i<size; i++){
+		if(get_timestamp_of_file(data[i].path) < data[i].timestamp){
+			char path[510];
+			
+			if(dir[strlen(dir)-1] == '/'){
+				snprintf(path,510,"%s%s",dir,data[i].path);
+			}else{
+				snprintf(path,510,"%s/%s",dir,data[i].path);
+			}
+			
+			int fd = creat(path,get_mode(dir));
+			printf("%s\n",path);
+			if(fd == -1){
+				perror("update_folder");
+				return EXIT_FAILURE;
+			}
+			
+			if(write(fd,data[i].data,strlen(data[i].data)) == -1){
+				perror("update_folder");
+				return EXIT_FAILURE;
+			}
+			close(fd);
+		} 
+	}	
+	
+	return EXIT_SUCCESS;
+}
+
 int fd_open_out(int fd_in, struct dirent* file) {
     int fd_out;
     if (isDirectory(file, file->d_name)) {
@@ -202,10 +241,13 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
 
 int get_timestamp_of_file(char * filename) {
     struct stat st;
-    int ierr = stat(filename, &st);
-    int newdate = st.st_mtime;
-    return newdate;
+    if(stat(filename, &st) == -1){
+    	/*perror("get_timestamp_of_file");
+    	return EXIT_FAILURE;*/
+    }
+    return st.st_mtime;
 }
+
 void filter_and_replace(const char * dir,Data * data, int *length){
 	int nb_of_me_data, max, min;
 	Data * dmin,*dmax;

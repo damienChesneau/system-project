@@ -35,7 +35,7 @@ void * connectman(void *arg) {
     struct sockaddr_in addr[nb_ip];
     int socket_fd[nb_ip];
     int i = 0;
-    to_syc = "./files_to_sync";
+    to_syc = "./files_to_sync2";
     for (i = 0; i < nb_ip; i++) {
         /*printf("%s\n",tab_addr[i]);*/
         socket_fd[i] = socket(AF_INET, SOCK_STREAM, 0);
@@ -50,20 +50,43 @@ void * connectman(void *arg) {
         }
         if (connect(socket_fd[i], (struct sockaddr *) &(addr[i]), sizeof (struct sockaddr)) != -1) {
             printf("Connected to %d\n", socket_fd[i]);
-            write(socket_fd[i], firstmessage, strlen(firstmessage));
+            
+            if(write(socket_fd[i], firstmessage, strlen(firstmessage)) == -1){
+            	perror("connectman");
+            }
+            
             int strlen_message = -1;
             if (read(socket_fd[i], &strlen_message, sizeof (int)) == -1) {
                 perror("connectman");
             }
             char messge[strlen_message];
-            read(socket_fd[i], &messge, strlen_message);
-            printf("RESULT= %s\n", messge);
+            
+            if(read(socket_fd[i], &messge, strlen_message) == -1){
+            	perror("connectman");
+            }
+            
+            printf("%s\n",messge);
+            
             int length = -1;
             Data * data = decode(messge, &length);
-            filter_and_replace("./files_to_sync2", data, &length);
-            char * test = encode(data,length);
-            printf("RESULT= %s\n", test);
-            close(socket_fd[i]);
+            filter_and_replace(to_syc, data, &length);
+            
+            char * encoded_data = encode(data, length);
+            int size = strlen(encoded_data) +1;
+            
+            if(write(socket_fd[i],&size,sizeof(int)) == -1){
+            	perror("connectman");
+           	}
+           	
+            if(write(socket_fd[i],encoded_data,size) == -1){
+            	perror("connectman");
+            };
+            
+            if(update_folder(to_syc,data,length) == -1){
+            	perror("connectman");
+            }
+            
+           	close(socket_fd[i]);
         } else {
             printf("not connected :( \n");
         }
@@ -76,20 +99,45 @@ void * connexion_manager(void *arg) {
     if (newSock != EXIT_FAILURE) {
         char buff[10000];
         printf("SERVEUR : connection acceped\n");
-        read(newSock, buff, sizeof (buff));
+        
+        if(read(newSock, buff, sizeof (buff)) == -1){
+        	perror("connexion_manager");
+        }	
+        
         if (strcmp(buff, firstmessage) == 0) {
             int nb = 0;
             to_syc = "./files_to_sync";
             Data * data = get_data_form_dir( to_syc, &nb);
-            /*int i = 0;
-            for(i = 0; i<nb; i++){
-            	printf("%s\n",data[i].path);
-            }*/
-            char * encodeed_message = encode(data, nb);
-            int strlen_message = strlen(encodeed_message);
-            write(newSock, &strlen_message, sizeof (int));
-            write(newSock, encodeed_message, strlen_message);
             
+            char * encodeed_message = encode(data, nb);
+            int strlen_message = strlen(encodeed_message)+1;
+            
+            if(write(newSock, &strlen_message, sizeof (int)) == -1){
+            	perror("connexion_manager");
+            }
+            
+            if(write(newSock, encodeed_message, strlen_message) == -1){
+            	perror("connexion_manager");
+            }
+            
+            int size;
+           
+           	if(read(newSock,&size,sizeof(int)) == -1){
+           		perror("connexion_manager");
+           	}
+           
+            char msg[size];
+            
+            if(read(newSock,msg,size) == -1){
+            	perror("connexion_manager");
+            }
+            
+            data = decode(msg,&nb);
+            printf("%s\n",msg);
+            
+            if(update_folder(to_syc,data,nb) == -1){
+            	perror("connexion_manager");
+            }
             close(newSock);
         }
     }

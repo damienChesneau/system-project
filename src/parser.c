@@ -18,9 +18,10 @@ char* appendTo(char * dest, const char *s) {
 }
 
 char* encode(Data * data, int length) {
-    char * d = malloc(sizeof(char));
+    char * d = malloc(sizeof(char)*2);
     d[0] = '{';
-    int i = 0; printf("ok\n");
+    d[1] = '\0';
+    int i = 0;
     for (i = 0; i < length; i++) {
         d = appendTo(d, "[#");
         d = appendTo(d, data[i].path);
@@ -80,10 +81,9 @@ Data * decode(const char * data,int * nb) {
             }
         } else if (newData[i] == ']') {
             int len3 = i - pos3;
-            strncpy(path, &newData[pos3], len3); /* It's not a good idea with a path of size 200 */
-            path[len3] = '\0';
             char * strBuf = malloc(len3 + 1);
-            strcpy(strBuf, path);
+            strncpy(strBuf, &newData[pos3], len3);
+            strBuf[len3] = '\0';
             datatoret[occurs - 1].data = strBuf;
         }
         if (nb_of_sharps == 3) {

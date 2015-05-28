@@ -14,3 +14,4 @@ int isDirectory(struct dirent* info,char* path);
 
 Data* get_data_form_dir(const char * dir, int * nb_of_datas);
 void filter_and_replace(const char * dir,Data * data, int *length);
+int update_folder(char * dir,Data * data, int size);
