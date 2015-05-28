@@ -13,4 +13,4 @@ int copy(int fd_out,int fd_in);
 int isDirectory(struct dirent* info,char* path);
 
 Data* get_data_form_dir(const char * dir, int * nb_of_datas);
-void filter_and_replace(Data * data, int length);
+void filter_and_replace(const char * dir,Data * data, int *length);

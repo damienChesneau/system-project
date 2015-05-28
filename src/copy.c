@@ -144,6 +144,7 @@ char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
         while (readedFile = readdir(repertory)) {
             if (strcmp(readedFile->d_name, ".") != 0 && strcmp(readedFile->d_name, "..") != 0) {
                 files[i] = readedFile->d_name;
+                //printf("%s\n",files[i]);
                 i++;
             }
         }
@@ -151,6 +152,7 @@ char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
             perror("readdir() failed");
         }
     }
+    //closedir(repertory);
     //    return (char**) files;
     return NULL;
 }
@@ -180,22 +182,20 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
     if (new_dir[strlen(new_dir) - 1] != '/') {
         strcat(new_dir, "/");
     }
-    Data datas[count];
+    
+   	Data * datas = malloc(sizeof(Data)*count);
     char * files[count];
     char** t = get_all_files_from_dir(new_dir, count, files);
     for (i = 0; i < count; i++) {
-        char * buffer = 0;
+        char * buffer;
         char tmp[255]; 
         strcpy(tmp, new_dir);
         strcat(tmp, files[i]);
         strcpy(datas[i].path, files[i]);
-
         get_data_from_file(tmp, &buffer);
-        datas[i].data = buffer;
         datas[i].data = malloc(strlen(buffer)+10);
         strcpy(datas[i].data, buffer); 
-        int current_timestamp = get_timestamp_of_file(tmp); 
-        datas[i].timestamp = current_timestamp; 
+        datas[i].timestamp =  get_timestamp_of_file(tmp);  
     }   
     return datas;
 }
@@ -206,6 +206,50 @@ int get_timestamp_of_file(char * filename) {
     int newdate = st.st_mtime;
     return newdate;
 }
-void filter_and_replace(Data * data, int length){
-    /*Data* get_data_form_dir(const char * dir, int * nb_of_datas)*/
-}
+void filter_and_replace(const char * dir,Data * data, int *length){
+	int nb_of_me_data, max, min;
+	Data * dmin,*dmax;
+    Data * me_data = get_data_form_dir(dir,&nb_of_me_data);
+    if(*length > nb_of_me_data){
+    	dmax = data;
+    	dmin = me_data;
+    	max = *length;
+    	min = nb_of_me_data;
+  	}else{
+  		dmax = me_data;
+  		dmin = data;
+  		max = nb_of_me_data;
+  		min = *length;
+  	}
+  	int i,j;
+  	int added = 0;
+  	for(i = 0; i<max; i++){
+  		int is_replaced = 0;
+  		for(j = 0; j<min ; j++){
+  			if(!is_replaced && strncmp(dmin[j].path,dmax[i].path,255) == 0){
+  				is_replaced = 1;
+  				if(dmin[j].timestamp > dmax[i].timestamp){
+  					dmax[i].timestamp = dmin[j].timestamp;
+  					dmax[i].data = realloc(dmax[i].data,strlen(dmin[j].data));
+  					strcpy(dmax[i].data,dmin[j].data);
+  				}
+  				
+  				if(dmin[j].timestamp < dmax[i].timestamp){
+  					dmin[j].timestamp = dmax[i].timestamp;
+  					dmin[j].data = realloc(dmin[j].data,strlen(dmax[i].data));
+  					strcpy(dmin[j].data,dmax[i].data);
+  				}
+  			} 		
+  		}
+  		
+  		if(!is_replaced){
+  			added++;
+  			dmin = realloc(dmin,(min+added)*sizeof(Data));
+  			strncpy(dmin[min+added-1].path,dmax[j].path,255);
+  			dmin[min+added-1].timestamp = dmax[j].timestamp;
+  			dmin[min+added-1].data = malloc(strlen(dmax[i].data));
+  			strncpy(dmin[min+added-1].data,dmax[i].data,strlen(dmax[i].data));
+  		}
+  	}
+  	*length = max;
+}		

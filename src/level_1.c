@@ -35,6 +35,7 @@ void * connectman(void *arg) {
     struct sockaddr_in addr[nb_ip];
     int socket_fd[nb_ip];
     int i = 0;
+    to_syc = "./files_to_sync";
     for (i = 0; i < nb_ip; i++) {
         /*printf("%s\n",tab_addr[i]);*/
         socket_fd[i] = socket(AF_INET, SOCK_STREAM, 0);
@@ -59,7 +60,10 @@ void * connectman(void *arg) {
             printf("RESULT= %s\n", messge);
             int length = -1;
             Data * data = decode(messge, &length);
-            filter_and_replace(data, length);
+            filter_and_replace("./files_to_sync2", data, &length);
+            char * test = encode(data,length);
+            printf("RESULT= %s\n", test);
+            close(socket_fd[i]);
         } else {
             printf("not connected :( \n");
         }
@@ -77,10 +81,16 @@ void * connexion_manager(void *arg) {
             int nb = 0;
             to_syc = "./files_to_sync";
             Data * data = get_data_form_dir( to_syc, &nb);
-            char * encodeed_message = encode(data, nb - 1);
+            /*int i = 0;
+            for(i = 0; i<nb; i++){
+            	printf("%s\n",data[i].path);
+            }*/
+            char * encodeed_message = encode(data, nb);
             int strlen_message = strlen(encodeed_message);
             write(newSock, &strlen_message, sizeof (int));
             write(newSock, encodeed_message, strlen_message);
+            
+            close(newSock);
         }
     }
     pthread_exit(NULL);
@@ -168,6 +178,7 @@ int setAcceptSocket(struct sockaddr_in* serv, int socket_fd) {
         perror("getSockAddr");
         return EXIT_FAILURE;
     }
+    
     return EXIT_SUCCESS;
 }
 
