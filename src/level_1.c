@@ -21,15 +21,22 @@ int setAcceptSocket(struct sockaddr_in* serv, int socket_fd);
 int getSockAddr(int port, struct sockaddr_in* serv);
 const char* ip_addr = "127.0.0.1";
 const char* firstmessage = "Hello, I want all your data please :)";
-int port_now = PORT;
+int port_now = -1;
 char * to_syc;
 void * connexion_manager(void *arg);
 
+
 void * connectman(void *arg) {
+    
     char **tab_addr = (char **) arg;
     int nb_ip = 0;
-    struct in_addr local;
+    int  nb_of_me_data;
     
+    to_syc = "./files_to_sync2";
+    
+    Data * me_data = get_data_form_dir(to_syc,&nb_of_me_data);
+    
+    struct in_addr local;
     if(inet_aton("127.0.0.1",&local) == -1){
     	perror("connectman");
     	return (void *) EXIT_FAILURE;
@@ -38,76 +45,95 @@ void * connectman(void *arg) {
     while (tab_addr[nb_ip] != NULL) {
         nb_ip++;
     }
-
-    struct sockaddr_in addr[nb_ip];
-    int socket_fd[nb_ip];
+    
+    struct sockaddr_in addr[nb_ip][PORT_OFFSET+1];
+    int socket_fd[nb_ip][PORT_OFFSET+1];
+    int connect_ret[nb_ip][PORT_OFFSET+1];
     int i = 0;
-    to_syc = "./files_to_sync2";
+    
     for (i = 0; i < nb_ip; i++) {
-        /*printf("%s\n",tab_addr[i]);*/
-        socket_fd[i] = socket(AF_INET, SOCK_STREAM, 0);
-        if (getSockAddr(PORT, &(addr[i])) == -1) {
-            perror("GET SOCK ADDR");
-            return (void *) EXIT_FAILURE;
-        }
-
-        if (inet_aton(tab_addr[i], &(addr[i].sin_addr.s_addr)) == -1) {
-            perror("connectman");
-            return (void*) EXIT_FAILURE;
-        }
-        
         int j = 0;
         for(j = 0; j<=PORT_OFFSET; j++){
+    
+		    if((socket_fd[i][j] = socket(AF_INET, SOCK_STREAM, 0)) == -1){
+		    	perror("connectman");
+		    	return (void *) EXIT_FAILURE;
+		    }
+		    
+		    if (getSockAddr(PORT+j, &(addr[i][j])) == -1) {
+		        perror("GET SOCK ADDR");
+		        return (void *) EXIT_FAILURE;
+		    }
+
+		    if (inet_aton(tab_addr[i], &(addr[i][j].sin_addr.s_addr)) == -1) {
+		        perror("connectman");
+		        return (void*) EXIT_FAILURE;
+		    }
         	
-        	/*printf("%d\t%d\n",port_now,htons(addr[i].sin_port));*/
-        	if(addr[i].sin_addr.s_addr != local.s_addr || htons(addr[i].sin_port) != port_now){
-				if (connect(socket_fd[i], (struct sockaddr *) &(addr[i]), sizeof (struct sockaddr)) != -1) {
-				    printf("Connected to %d\n", socket_fd[i]);
+        	while(port_now == -1);
+        	
+        	if(addr[i][j].sin_addr.s_addr != local.s_addr || htons(addr[i][j].sin_port) != port_now){
+				if ((connect_ret[i][j] = connect(socket_fd[i][j], (struct sockaddr *) &(addr[i][j]), sizeof (struct sockaddr))) != -1) {
+					printf("%d\n",connect_ret[i][j]);
+				    printf("Connected to %d\n", socket_fd[i][j]);
 				    
-				    if(write(socket_fd[i], firstmessage, strlen(firstmessage)) == -1){
+				    if(write(socket_fd[i][j], firstmessage, strlen(firstmessage)) == -1){
 				    	perror("connectman");
 				    }
 				    
 				    int strlen_message = -1;
-				    if (read(socket_fd[i], &strlen_message, sizeof (int)) == -1) {
+				    if (read(socket_fd[i][j], &strlen_message, sizeof (int)) == -1) {
 				        perror("connectman");
 				    }
 				    char messge[strlen_message];
 				    
-				    if(read(socket_fd[i], &messge, strlen_message) == -1){
+				    if(read(socket_fd[i][j], &messge, strlen_message) == -1){
 				    	perror("connectman");
 				    }
-				    
-				    printf("%s\n",messge);
 				    
 				    int length = -1;
 				    Data * data = decode(messge, &length);
-				    filter_and_replace(to_syc, data, &length);
-				    
-				    char * encoded_data = encode(data, length);
-				    int size = strlen(encoded_data) +1;
-				    
-				    if(write(socket_fd[i],&size,sizeof(int)) == -1){
-				    	perror("connectman");
-				   	}
-				   	
-				    if(write(socket_fd[i],encoded_data,size) == -1){
-				    	perror("connectman");
-				    };
-				    /*printf("OK\n");*/
-				    if(update_folder(to_syc,data,length) == -1){
-				    	perror("connectman");
-				    }
-				    
-				   	close(socket_fd[i]);
+				    filter_and_replace(me_data, &nb_of_me_data, data, &length);
 				} else {
 				    /*printf("not connected :( \n");*/
 				}
 		    }
 			
-			addr[i].sin_port = htons(htons(addr[i].sin_port)+1);
         }
     }
+    
+    char * encoded_data = encode(me_data, nb_of_me_data);
+    int size = strlen(encoded_data) +1;
+    
+    for (i = 0; i < nb_ip; i++) {
+    	int j = 0;
+        for(j = 0; j<=PORT_OFFSET; j++){
+        
+        	if(connect_ret[i][j] != -1){
+        		if(addr[i][j].sin_addr.s_addr != local.s_addr || htons(addr[i][j].sin_port) != port_now){
+				    
+				    if(write(socket_fd[i][j],&size,sizeof(int)) == -1){
+				    	perror("connectman");
+				   	}
+				   	
+				    if(write(socket_fd[i][j],encoded_data,size) == -1){
+				    	perror("connectman");
+				    };
+				    
+				   	close(socket_fd[i][j]);
+        		}
+        	
+       		}
+       	}
+    
+    }
+    
+	printf("%s\n",encoded_data);
+	
+	if(update_folder(to_syc,me_data,nb_of_me_data) == -1){
+		perror("connectman");
+	}
+
     pthread_exit(NULL);
 }
 
@@ -137,6 +163,8 @@ void * connexion_manager(void *arg) {
             	perror("connexion_manager");
             }
             
+            
+            printf("Recuperation of files...\n");
             int size;
            
            	if(read(newSock,&size,sizeof(int)) == -1){
@@ -184,9 +212,14 @@ void * switchman(void *arg) {
         }
 
         int newSock = accept(socket_fd, NULL, NULL);
+        if(newSock == -1){
+        	perror("switchman");
+        	return (void*) EXIT_FAILURE;
+        }
+        
         printf("Connect accepted by serveur\n");
         pthread_t new_manager;
-
+		
         if (pthread_create(&new_manager, NULL, connexion_manager, (void*) (intptr_t) newSock) == -1) {
             perror("pthread_create");
             return (void*) EXIT_FAILURE;
@@ -198,6 +231,7 @@ void * switchman(void *arg) {
 int main(int argc, char* argv[]) {
     char ** ips = (char **) malloc(sizeof (char *)*argc);
     pthread_t thread1;
+    
     if (pthread_create(&thread1, NULL, switchman, NULL) == -1) {
         perror("pthread_create");
         return EXIT_FAILURE;
@@ -209,7 +243,9 @@ int main(int argc, char* argv[]) {
     }
     ips[argc] = NULL;
     sleep(3);
-    connectman(ips);
+    if(argc>1){
+    	connectman(ips);
+    }
     while (1) {
         sleep(1000);
     }
@@ -242,11 +278,13 @@ int setAcceptSocket(struct sockaddr_in* serv, int socket_fd) {
     }
     
 	if(error == -1){
+		port_now = 0;
         perror("getSockAddr");
         return EXIT_FAILURE;
     }
 	
     if (listen(socket_fd, PORT) == -1) {
+    	port_now = 0;
         perror("getSockAddr");
         return EXIT_FAILURE;
     }

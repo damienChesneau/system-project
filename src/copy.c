@@ -248,19 +248,18 @@ int get_timestamp_of_file(char * filename) {
     return st.st_mtime;
 }
 
-void filter_and_replace(const char * dir,Data * data, int *length){
-	int nb_of_me_data, max, min;
+void filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int *length){
+	int max, min;
 	Data * dmin,*dmax;
-    Data * me_data = get_data_form_dir(dir,&nb_of_me_data);
-    if(*length > nb_of_me_data){
+    if(*length > *nb_of_me_data){
     	dmax = data;
     	dmin = me_data;
     	max = *length;
-    	min = nb_of_me_data;
+    	min = *nb_of_me_data;
   	}else{
   		dmax = me_data;
   		dmin = data;
-  		max = nb_of_me_data;
+  		max = *nb_of_me_data;
   		min = *length;
   	}
   	int i,j;
@@ -289,9 +288,10 @@ void filter_and_replace(const char * dir,Data * data, int *length){
   			dmin = realloc(dmin,(min+added)*sizeof(Data));
   			strncpy(dmin[min+added-1].path,dmax[j].path,255);
   			dmin[min+added-1].timestamp = dmax[j].timestamp;
-  			dmin[min+added-1].data = malloc(strlen(dmax[i].data));
+  			dmin[min+added-1].data = malloc(strlen(dmax[i].data)+1);
   			strncpy(dmin[min+added-1].data,dmax[i].data,strlen(dmax[i].data));
   		}
   	}
   	*length = max;
+  	*nb_of_me_data = max;
 }		
