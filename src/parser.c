@@ -91,5 +91,21 @@ Data * decode(const char * data,int * nb) {
             occurs++;
         }
     }
+    
     return datatoret;
+}
+
+void free_encoded_message(char * msg){
+	free(msg);
+	msg = NULL;
+}
+
+void free_data(Data * data, int length){
+	int i;
+	for(i = 0; i<length; i++){
+		free(data[i].data);
+		data[i].data = NULL;
+	}
+	free(data);
+	data = NULL;
 }

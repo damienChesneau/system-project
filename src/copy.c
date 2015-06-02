@@ -169,6 +169,7 @@ int count_dir_files(const char * dir) {
             perror("readdir() failed");
         }
     }
+    closedir(repertory);
     return nbr;
 }
 
@@ -182,7 +183,12 @@ char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
         int i = 0;
         while (readedFile = readdir(repertory)) {
             if (strcmp(readedFile->d_name, ".") != 0 && strcmp(readedFile->d_name, "..") != 0) {
-                files[i] = readedFile->d_name;
+                /*files[i] = readedFile->d_name;*/
+                if((files[i] = (char *)malloc((sizeof(char)*strlen(readedFile->d_name))+1)) == NULL){
+                	perror("get_all_files_from_dir");
+                	return NULL;
+                }
+                strncpy(files[i],readedFile->d_name,strlen(readedFile->d_name));
                 //printf("%s\n",files[i]);
                 i++;
             }
@@ -191,7 +197,7 @@ char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
             perror("readdir() failed");
         }
     }
-    //closedir(repertory);
+    closedir(repertory);
     //    return (char**) files;
     return NULL;
 }
@@ -204,7 +210,7 @@ void get_data_from_file(const char * filename, char ** buffer) {
         fseek(f, 0, SEEK_END);
         length = ftell(f);
         fseek(f, 0, SEEK_SET);
-        *buffer = malloc(length);
+        *buffer = malloc(sizeof(char)*length);
         if (*buffer) {
             fread(*buffer, 1, length, f);
         }
@@ -232,9 +238,12 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
         strcat(tmp, files[i]);
         strcpy(datas[i].path, files[i]);
         get_data_from_file(tmp, &buffer);
-        datas[i].data = malloc(strlen(buffer)+10);
+        datas[i].data = malloc(strlen(buffer)+1);
         strcpy(datas[i].data, buffer); 
         datas[i].timestamp =  get_timestamp_of_file(tmp);  
+        free(buffer);
+        free(files[i]);
+        files[i] = NULL;
     }   
     return datas;
 }

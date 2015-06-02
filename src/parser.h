@@ -7,3 +7,6 @@ typedef struct data {
 
 Data * decode(const char * data, int * nb);
 char * encode(Data * data, int length);
+
+void free_encoded_message(char * msg);
+void free_data(Data * data, int length);

@@ -26,10 +26,10 @@ char * to_syc;
 void * connexion_manager(void *arg);
 
 
-void * connectman(void *arg) {
+void connectman(char **tab_addr,int length) {
     
-    char **tab_addr = (char **) arg;
-    int nb_ip = 0;
+   /* char **tab_addr = (char **) arg;*/
+    int nb_ip = length;
     int  nb_of_me_data;
     
     to_syc = "./files_to_sync2";
@@ -39,12 +39,8 @@ void * connectman(void *arg) {
     struct in_addr local;
     if(inet_aton("127.0.0.1",&local) == -1){
     	perror("connectman");
-    	return (void *) EXIT_FAILURE;
     }
     
-    while (tab_addr[nb_ip] != NULL) {
-        nb_ip++;
-    }
     
     struct sockaddr_in addr[nb_ip][PORT_OFFSET+1];
     int socket_fd[nb_ip][PORT_OFFSET+1];
@@ -57,21 +53,20 @@ void * connectman(void *arg) {
     
 		    if((socket_fd[i][j] = socket(AF_INET, SOCK_STREAM, 0)) == -1){
 		    	perror("connectman");
-		    	return (void *) EXIT_FAILURE;
+		    	return;
 		    }
 		    
 		    if (getSockAddr(PORT+j, &(addr[i][j])) == -1) {
 		        perror("GET SOCK ADDR");
-		        return (void *) EXIT_FAILURE;
+		        return;
 		    }
 
 		    if (inet_aton(tab_addr[i], &(addr[i][j].sin_addr.s_addr)) == -1) {
 		        perror("connectman");
-		        return (void*) EXIT_FAILURE;
+		        return;
 		    }
         	
         	while(port_now == -1);
-        	
         	if(addr[i][j].sin_addr.s_addr != local.s_addr || htons(addr[i][j].sin_port) != port_now){
 				if ((connect_ret[i][j] = connect(socket_fd[i][j], (struct sockaddr *) &(addr[i][j]), sizeof (struct sockaddr))) != -1) {
 					printf("%d\n",connect_ret[i][j]);
@@ -92,8 +87,12 @@ void * connectman(void *arg) {
 				    }
 				    
 				    int length = -1;
+				    
 				    Data * data = decode(messge, &length);
+				    
 				    filter_and_replace(me_data, &nb_of_me_data, data, &length);
+				    
+				    free_data(data,length);
 				} else {
 				    /*printf("not connected :( \n");*/
 				}
@@ -133,8 +132,14 @@ void * connectman(void *arg) {
 	if(update_folder(to_syc,me_data,nb_of_me_data) == -1){
 		perror("connectman");
 	}
-
-    pthread_exit(NULL);
+	
+	free_encoded_message(encoded_data);
+	free_data(me_data,nb_of_me_data);
+	
+	for(i = 0; i<nb_ip;i++){
+		free(tab_addr[i]);
+		tab_addr[i] = NULL;
+	}
 }
 
 void * connexion_manager(void *arg) {
@@ -165,6 +170,7 @@ void * connexion_manager(void *arg) {
             
             
             printf("Recuperation of files...\n");
+            free_data(data,nb);
             int size;
            
            	if(read(newSock,&size,sizeof(int)) == -1){
@@ -183,6 +189,9 @@ void * connexion_manager(void *arg) {
             if(update_folder(to_syc,data,nb) == -1){
             	perror("connexion_manager");
             }
+            
+            free_encoded_message(encodeed_message);
+            free_data(data,nb);
             close(newSock);
         }
     }
@@ -229,7 +238,11 @@ void * switchman(void *arg) {
 }
 
 int main(int argc, char* argv[]) {
-    char ** ips = (char **) malloc(sizeof (char *)*argc);
+    char ** ips = NULL;
+    if(argc > 1){
+     ips = (char **) malloc(sizeof (char *)*argc);
+    }
+    /*char * ips[argc+1];*/
     pthread_t thread1;
     
     if (pthread_create(&thread1, NULL, switchman, NULL) == -1) {
@@ -239,13 +252,16 @@ int main(int argc, char* argv[]) {
     int i = 0;
     for (i = 1; i < argc; i++) {
         ips[i - 1] = (char *) malloc(sizeof (char)*strlen(argv[i]));
-        strcpy(ips[i - 1], argv[i]);
+        strncpy(ips[i - 1], argv[i],strlen(argv[i]));
     }
-    ips[argc] = NULL;
+    
     sleep(3);
     if(argc>1){
-    	connectman(ips);
+    	ips[argc] = NULL;
+    	connectman(ips,argc-1);
     }
+    free(ips);
+    ips = NULL;
     while (1) {
         sleep(1000);
     }
