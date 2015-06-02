@@ -11,8 +11,8 @@ char* appendTo(char * dest, const char *s) {
     
     char * strBuf = (char *) malloc(sizeof(char)*(totalLength+1));
     
-    strcpy(strBuf, dest);
-    strcpy(strBuf + destLen, s);
+    strncpy(strBuf, dest, destLen);
+    strcpy(strBuf+destLen, s);
     free(dest);
     return strBuf;
 }

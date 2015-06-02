@@ -69,7 +69,6 @@ void connectman(char **tab_addr,int length) {
         	while(port_now == -1);
         	if(addr[i][j].sin_addr.s_addr != local.s_addr || htons(addr[i][j].sin_port) != port_now){
 				if ((connect_ret[i][j] = connect(socket_fd[i][j], (struct sockaddr *) &(addr[i][j]), sizeof (struct sockaddr))) != -1) {
-					printf("%d\n",connect_ret[i][j]);
 				    printf("Connected to %d\n", socket_fd[i][j]);
 				    
 				    if(write(socket_fd[i][j], firstmessage, strlen(firstmessage)) == -1){
