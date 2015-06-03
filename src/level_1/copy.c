@@ -195,6 +195,7 @@ Data * filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int l
 	}
 	
 	me_data = realloc(me_data,sizeof(Data)*(*nb_of_me_data+added));
+	added = 0;
 	
 	for(i = 0; i<length; i++){
 		int is_replaced = 0;
