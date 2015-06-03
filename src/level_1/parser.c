@@ -39,6 +39,9 @@ char* encode(Data * data, int length) {
         d = appendTo(d, "--++#++--");
         d = appendTo(d, buf);
         d = appendTo(d, "--++#++--");
+        sprintf(buf, "%d", data[i].mode);
+        d = appendTo(d, buf);
+        d = appendTo(d, "--++#++--");
         d = appendTo(d, data[i].data);
         d = appendTo(d, "--++]++--");
         if (i != length - 1) {
@@ -56,7 +59,7 @@ Data * decode(const char * data,int * nb) {
     int i = 0, nb_of_data = 0, nb_of_sharps = 0;
     char path [PATH_SIZE];
     path[PATH_SIZE - 1] = '\0';
-    int pos1, pos2, pos3=0, occurs = 0;
+    int pos1 = 0, pos2 = 0, pos3 = 0,pos4 = 0, occurs = 0;
     
     for (i = 0; i < length; i++) {
         if (newData[i] == '[') {
@@ -93,20 +96,28 @@ Data * decode(const char * data,int * nb) {
                     int tra = atoi(path);
                     datatoret[occurs].timestamp = tra;
                     break;
+                case 4:
+                    pos4 = i + 5;
+                    int len3 = i - pos3-4;
+                    strncpy(path, &newData[pos3], len3);
+                    path[len3] = '\0';
+                    int tra2 = atoi(path);
+                    datatoret[occurs].mode = tra2;
+                    break;
             }
         } else if (newData[i-4] == '-' && newData[i-3] == '-' && newData[i-2] == '+'&& newData[i-1] == '+' && newData[i] == ']' && newData[i+1] == '+'&& newData[i+2] == '+'&& newData[i+3] == '-'&& newData[i+4] == '-') {
-            int len3 = i - pos3-4;
+            int len4 = i - pos4-4;
            	char * strBuf;
-            if((strBuf = malloc((sizeof(char)*len3) + 1)) == NULL){
+            if((strBuf = malloc((sizeof(char)*len4) + 1)) == NULL){
             	perror("decode");
             	return NULL;
             }
             
-            strncpy(strBuf, &newData[pos3], len3);
-            strBuf[len3] = '\0';
+            strncpy(strBuf, &newData[pos4], len4);
+            strBuf[len4] = '\0';
             datatoret[occurs - 1].data = strBuf;
         }
-        if (nb_of_sharps == 3) {
+        if (nb_of_sharps == 4) {
             nb_of_sharps = 0;
             occurs++;
         }

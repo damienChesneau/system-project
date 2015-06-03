@@ -41,7 +41,7 @@ int update_folder(char * dir,Data * data, int size){
 			snprintf(path,PATH_SIZE*2,"%s/%s",dir,data[i].path);
 		}
 		
-		int fd = creat(path,get_mode(dir));
+		int fd = creat(path,data[i].mode);
 		printf("%s\n",path);
 		if(fd == -1){
 			perror("update_folder");
@@ -163,6 +163,7 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
         
         strcpy(datas[i].data, buffer); 
         datas[i].timestamp =  get_timestamp_of_file(tmp);  
+        datas[i].mode = get_mode(tmp);
         free(buffer);
         free(files[i]);
         files[i] = NULL;
@@ -205,6 +206,7 @@ Data * filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int l
 				is_replaced = 1;
 				if(data[i].timestamp > me_data[j].timestamp){
 					me_data[j].timestamp = data[i].timestamp;
+					me_data[j].mode = data[i].mode;
 					me_data[j].data = malloc((strlen(data[i].data)*sizeof(char))+1);
 					strcpy(me_data[j].data,data[i].data);
 				}
@@ -214,7 +216,7 @@ Data * filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int l
 			added++;
   			strncpy(me_data[*nb_of_me_data+added-1].path,data[i].path,PATH_SIZE);
   			me_data[*nb_of_me_data+added-1].timestamp = data[i].timestamp;
-  			
+  			me_data[*nb_of_me_data+added-1].mode = data[i].mode;
   			if((me_data[*nb_of_me_data+added-1].data = malloc((sizeof(char)*strlen(data[i].data))+1)) == NULL){
   				perror("filter_and_replace");
   				return;

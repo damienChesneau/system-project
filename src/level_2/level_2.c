@@ -99,6 +99,7 @@ void connectman(char **tab_addr,int length) {
 				    
 				    print_data(me_data,nb_of_me_data);
 				    printf("OK\n");
+				    print_data(data,length);
 				    me_data = filter_and_replace(me_data, &nb_of_me_data, data, length);
 				    print_data(me_data,nb_of_me_data);
 				    free_data(data,length);
@@ -183,7 +184,7 @@ void * connexion_manager(void *arg) {
             	perror("connexion_manager");
             }
             
-            
+            /*printf("%s\n",encodeed_message);*/
             printf("Recuperation of files...\n");
             free_data(data,nb);
             int size;

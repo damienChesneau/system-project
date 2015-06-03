@@ -3,6 +3,7 @@ typedef struct data {
     char path[PATH_SIZE];/*FILE NAME*/
     int timestamp; /* DATE OF LASTEST UPDATE */
     char * data; /* FILE DATA */
+    int mode;
 } Data;
 
 Data * decode(const char * data, int * nb);
