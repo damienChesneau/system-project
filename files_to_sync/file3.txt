@@ -1,1 +1,2 @@
 Hello, Yes, it is originaly, I'm number file 3
+	rm -©.

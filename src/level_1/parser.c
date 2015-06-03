@@ -17,6 +17,7 @@ char* appendTo(char * dest, const char *s) {
     strncpy(strBuf, dest, destLen);
     strcpy(strBuf+destLen, s);
     free(dest);
+    dest = NULL;
     return strBuf;
 }
 
@@ -26,11 +27,11 @@ char* encode(Data * data, int length) {
     	perror("encode");
     	return NULL;
     }
-    
     d[0] = '{';
     d[1] = '\0';
     int i = 0;
     for (i = 0; i < length; i++) {
+        /*printf("%s\n",data[i].path);*/
         d = appendTo(d, "--++[++----++#++--");
         d = appendTo(d, data[i].path);
         char buf[256];
@@ -43,6 +44,7 @@ char* encode(Data * data, int length) {
         if (i != length - 1) {
             d = appendTo(d, ",");
         }
+        /*printf("%s\n\n",d);*/
     }
     d = appendTo(d, "}\0");
     return d;

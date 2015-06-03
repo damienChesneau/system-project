@@ -1,14 +1,14 @@
-all: clean dir level_2_test 
+all: clean dir level_1_test 
 
 level_2_test: lcopy_2 lparser_2
-	gcc src/level_2/level_2.c ./bin/lparser.o ./bin/lcopy.o -Wall -ansi -o ./bin/level_2  -lpthread	
+	gcc src/level_2/level_2.c ./bin/lparser.o ./bin/lcopy.o -Wall -ansi -o ./bin/synchronizer  -lpthread	
 lparser_2: 
 	gcc -c ./src/level_2/parser.c -o ./bin/lparser.o
 lcopy_2: 
 	gcc -c ./src/level_2/copy.c -o ./bin/lcopy.o
 
 level_1_test: lcopy_1 lparser_1 
-	gcc src/level_1/level_1.c ./bin/lparser.o ./bin/lcopy.o -Wall -ansi -o ./bin/level_1  -lpthread
+	gcc src/level_1/level_1.c ./bin/lparser.o ./bin/lcopy.o -Wall -ansi -o ./bin/synchronizer  -lpthread
 lparser_1: 
 	gcc -c ./src/level_1/parser.c -o ./bin/lparser.o
 lcopy_1: 

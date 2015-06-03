@@ -2,8 +2,9 @@
 #define _SVID_SOURCE 1
 #include<dirent.h>
 #include "parser.h"
-int isDirectory(struct dirent* info,char* path);
+
+void print_data(Data * me_data,int size);
 
 Data* get_data_form_dir(const char * dir, int * nb_of_datas);
-void filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int *length);
+Data * filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int length);
 int update_folder(char * dir,Data * data, int size);

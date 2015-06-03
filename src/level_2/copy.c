@@ -13,6 +13,13 @@
 #define _SVID_SOURCE 1
 int get_timestamp_of_file(char * filename);
 
+void print_data(Data * me_data,int size){
+	int i;	
+	for(i = 0; i<size; i++){
+		printf("TTTTTTTTTTTTTTTTTT%s\n",me_data[i].path);
+	}
+}
+
 int get_mode(char * filename) {
     struct stat st;
     if(stat(filename, &st) == -1){
@@ -61,8 +68,10 @@ int count_dir_files(const char * dir) {
         errno = 0;
         int i = 0;
         while (readedFile = readdir(repertory)) {
-            if (strcmp(readedFile->d_name, ".") != 0 && strcmp(readedFile->d_name, "..") != 0) {
-                nbr++;
+        	if(readedFile->d_type != DT_DIR){
+		        if (strcmp(readedFile->d_name,"synchronizer") != 0 && readedFile->d_name[0] != '.') {
+                	nbr++;
+                }
             }
         }
         if (errno) {
@@ -82,18 +91,23 @@ char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
         errno = 0;
         int i = 0;
         while (readedFile = readdir(repertory)) {
-            if (strcmp(readedFile->d_name, ".") != 0 && strcmp(readedFile->d_name, "..") != 0) {
-                if((files[i] = (char *)malloc((sizeof(char)*strlen(readedFile->d_name))+1)) == NULL){
-                	perror("get_all_files_from_dir");
-                	return NULL;
-                }
-                strncpy(files[i],readedFile->d_name,strlen(readedFile->d_name));
-                i++;
+        	if(readedFile->d_type != DT_DIR){
+		        if (strcmp(readedFile->d_name,"synchronizer") != 0 && readedFile->d_name[0] != '.') {
+		            if((files[i] = (char *)malloc((sizeof(char)*strlen(readedFile->d_name))+1)) == NULL){
+		            	perror("get_all_files_from_dir");
+		            	return NULL;
+		            }
+		            strncpy(files[i],readedFile->d_name,strlen(readedFile->d_name));
+		            i++;
+		        }
+            }else{
+            	/*printf("%s\n",readedFile->d_name);*/
             }
         }
         if (errno) {
             perror("readdir() failed");
         }
+        /*printf("%d\n",i);*/
     }
     closedir(repertory);
     return NULL;
@@ -102,7 +116,6 @@ char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
 void get_data_from_file(const char * filename, char ** buffer) {
     long length;
     FILE * f = fopen(filename, "rb");
-
     if (f) {
         fseek(f, 0, SEEK_END);
         length = ftell(f);
@@ -163,55 +176,39 @@ int get_timestamp_of_file(char * filename) {
     return st.st_mtime;
 }
 
-void filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int *length){
-	int max, min;
-	Data * dmin,*dmax;
-    if(*length > *nb_of_me_data){
-    	dmax = data;
-    	dmin = me_data;
-    	max = *length;
-    	min = *nb_of_me_data;
-  	}else{
-  		dmax = me_data;
-  		dmin = data;
-  		max = *nb_of_me_data;
-  		min = *length;
-  	}
-  	int i,j;
-  	int added = 0;
-  	for(i = 0; i<max; i++){
-  		int is_replaced = 0;
-  		for(j = 0; j<min ; j++){
-  			if(!is_replaced && strncmp(dmin[j].path,dmax[i].path,PATH_SIZE) == 0){
-  				is_replaced = 1;
-  				if(dmin[j].timestamp > dmax[i].timestamp){
-  					dmax[i].timestamp = dmin[j].timestamp;
-  					dmax[i].data = realloc(dmax[i].data,strlen(dmin[j].data));
-  					strcpy(dmax[i].data,dmin[j].data);
-  				}
-  				
-  				if(dmin[j].timestamp < dmax[i].timestamp){
-  					dmin[j].timestamp = dmax[i].timestamp;
-  					dmin[j].data = realloc(dmin[j].data,strlen(dmax[i].data));
-  					strcpy(dmin[j].data,dmax[i].data);
-  				}
-  			} 		
-  		}
-  		
-  		if(!is_replaced){
-  			added++;
-  			dmin = realloc(dmin,(min+added)*sizeof(Data));
-  			strncpy(dmin[min+added-1].path,dmax[j].path,PATH_SIZE);
-  			dmin[min+added-1].timestamp = dmax[j].timestamp;
+Data * filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int length){
+	
+	int i = 0;
+	int added = 0;
+	
+	for(i = 0; i<length; i++){
+		int is_replaced = 0;
+		int j = 0;
+		for(j = 0; j<(*nb_of_me_data); j++){
+			if(!is_replaced && strncmp(data[i].path,me_data[j].path,PATH_SIZE) == 0){
+				is_replaced = 1;
+				if(data[i].timestamp > me_data[j].timestamp){
+					me_data[j].timestamp = data[i].timestamp;
+					me_data[j].data = malloc((strlen(data[i].data)*sizeof(char))+1);
+					strcpy(me_data[j].data,data[i].data);
+				}
+			}
+		}
+		if(!is_replaced){
+			added++;
+			me_data = realloc(me_data,sizeof(Data)*(*nb_of_me_data+added));
+  			strncpy(me_data[*nb_of_me_data+added-1].path,data[i].path,PATH_SIZE);
+  			me_data[*nb_of_me_data+added-1].timestamp = data[i].timestamp;
   			
-  			if((dmin[min+added-1].data = malloc((sizeof(char)*strlen(dmax[i].data))+1)) == NULL){
+  			if((me_data[*nb_of_me_data+added-1].data = malloc((sizeof(char)*strlen(data[i].data))+1)) == NULL){
   				perror("filter_and_replace");
   				return;
   			}
   			
-  			strncpy(dmin[min+added-1].data,dmax[i].data,strlen(dmax[i].data));
-  		}
-  	}
-  	*length = max;
-  	*nb_of_me_data = max;
+  			strncpy(me_data[*nb_of_me_data+added-1].data,data[i].data,strlen(data[i].data));
+		}
+	}
+	
+	*nb_of_me_data = *nb_of_me_data+added;
+	return me_data;
 }		
