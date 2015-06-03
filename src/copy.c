@@ -210,10 +210,14 @@ void get_data_from_file(const char * filename, char ** buffer) {
         fseek(f, 0, SEEK_END);
         length = ftell(f);
         fseek(f, 0, SEEK_SET);
-        *buffer = malloc(sizeof(char)*length);
+        if((*buffer = malloc((sizeof(char)*length)+1)) == NULL){
+        	perror("get_data_from_files");
+        	return;
+        }
         if (*buffer) {
             fread(*buffer, 1, length, f);
         }
+        (*buffer)[length] = '\0';
         fclose(f);
     }
 }
@@ -227,8 +231,11 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
     if (new_dir[strlen(new_dir) - 1] != '/') {
         strcat(new_dir, "/");
     }
-    
-   	Data * datas = malloc(sizeof(Data)*count);
+    Data * datas;
+   	if((datas = malloc(sizeof(Data)*count)) == NULL){
+   		perror("get_data_from_dir");
+   		return NULL;
+   	}
     char * files[count];
     char** t = get_all_files_from_dir(new_dir, count, files);
     for (i = 0; i < count; i++) {
@@ -238,7 +245,12 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
         strcat(tmp, files[i]);
         strcpy(datas[i].path, files[i]);
         get_data_from_file(tmp, &buffer);
-        datas[i].data = malloc(strlen(buffer)+1);
+        
+        if((datas[i].data = malloc((sizeof(char)*strlen(buffer))+1)) == NULL){
+        	perror("get_data_from_dir");
+        	return NULL;
+        }
+        
         strcpy(datas[i].data, buffer); 
         datas[i].timestamp =  get_timestamp_of_file(tmp);  
         free(buffer);
@@ -297,7 +309,12 @@ void filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int *le
   			dmin = realloc(dmin,(min+added)*sizeof(Data));
   			strncpy(dmin[min+added-1].path,dmax[j].path,255);
   			dmin[min+added-1].timestamp = dmax[j].timestamp;
-  			dmin[min+added-1].data = malloc(strlen(dmax[i].data)+1);
+  			
+  			if((dmin[min+added-1].data = malloc((sizeof(char)*strlen(dmax[i].data))+1)) == NULL){
+  				perror("filter_and_replace");
+  				return;
+  			}
+  			
   			strncpy(dmin[min+added-1].data,dmax[i].data,strlen(dmax[i].data));
   		}
   	}

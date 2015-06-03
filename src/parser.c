@@ -8,8 +8,11 @@ char* appendTo(char * dest, const char *s) {
     int destLen = strlen(dest);
   
     int totalLength = sLength + destLen;
-    
-    char * strBuf = (char *) malloc(sizeof(char)*(totalLength+1));
+    char * strBuf;
+    if((strBuf = (char *) malloc(sizeof(char)*(totalLength)+1)) == NULL){
+    	perror("appendTo");
+    	return NULL;
+    }
     
     strncpy(strBuf, dest, destLen);
     strcpy(strBuf+destLen, s);
@@ -18,7 +21,12 @@ char* appendTo(char * dest, const char *s) {
 }
 
 char* encode(Data * data, int length) {
-    char * d = malloc(sizeof(char)*2);
+    char * d;
+    if((d = malloc(sizeof(char)*2)) == NULL){
+    	perror("encode");
+    	return NULL;
+    }
+    
     d[0] = '{';
     d[1] = '\0';
     int i = 0;
@@ -54,7 +62,12 @@ Data * decode(const char * data,int * nb) {
         }
     }
     *nb = nb_of_data;
-    Data * datatoret = (Data *)malloc(sizeof (Data) * nb_of_data);
+    Data * datatoret;
+    if((datatoret = (Data *)malloc(sizeof (Data) * nb_of_data)) == NULL){
+    	perror("decode");
+    	return NULL;
+    }
+    
     for (i = 0; i < length; i++) {
         if (newData[i] == '#') {
             nb_of_sharps++;
@@ -81,7 +94,12 @@ Data * decode(const char * data,int * nb) {
             }
         } else if (newData[i] == ']') {
             int len3 = i - pos3;
-            char * strBuf = malloc(len3 + 1);
+           	char * strBuf;
+            if((strBuf = malloc((sizeof(char)*len3) + 1)) == NULL){
+            	perror("decode");
+            	return NULL;
+            }
+            
             strncpy(strBuf, &newData[pos3], len3);
             strBuf[len3] = '\0';
             datatoret[occurs - 1].data = strBuf;

@@ -239,7 +239,10 @@ void * switchman(void *arg) {
 int main(int argc, char* argv[]) {
     char ** ips = NULL;
     if(argc > 1){
-     ips = (char **) malloc(sizeof (char *)*argc);
+     if((ips = (char **) malloc(sizeof (char *)*argc)) == NULL){
+     	perror(argv[0]);
+     	return EXIT_FAILURE;
+     }
     }
     /*char * ips[argc+1];*/
     pthread_t thread1;
@@ -250,7 +253,10 @@ int main(int argc, char* argv[]) {
     }
     int i = 0;
     for (i = 1; i < argc; i++) {
-        ips[i - 1] = (char *) malloc(sizeof (char)*strlen(argv[i]));
+        if((ips[i - 1] = (char *) malloc(sizeof (char)*strlen(argv[i]))) == NULL){
+        	perror(argv[0]);
+        	return EXIT_FAILURE;
+        }
         strncpy(ips[i - 1], argv[i],strlen(argv[i]));
     }
     
