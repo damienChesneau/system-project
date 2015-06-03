@@ -180,6 +180,21 @@ Data * filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int l
 	
 	int i = 0;
 	int added = 0;
+	for(i = 0; i<length; i++){
+		int is_replaced = 0;
+		int j = 0;
+		for(j = 0; j<(*nb_of_me_data); j++){
+			if(!is_replaced && strncmp(data[i].path,me_data[j].path,PATH_SIZE) == 0){
+				is_replaced = 1;
+			}
+		}
+		
+		if(!is_replaced){
+			added++;
+		}
+	}
+	
+	me_data = realloc(me_data,sizeof(Data)*(*nb_of_me_data+added));
 	
 	for(i = 0; i<length; i++){
 		int is_replaced = 0;
@@ -196,7 +211,6 @@ Data * filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int l
 		}
 		if(!is_replaced){
 			added++;
-			me_data = realloc(me_data,sizeof(Data)*(*nb_of_me_data+added));
   			strncpy(me_data[*nb_of_me_data+added-1].path,data[i].path,PATH_SIZE);
   			me_data[*nb_of_me_data+added-1].timestamp = data[i].timestamp;
   			

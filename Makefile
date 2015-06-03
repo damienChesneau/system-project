@@ -1,4 +1,4 @@
-all: clean dir level_1_test 
+all: clean dir level_2_test 
 
 level_2_test: lcopy_2 lparser_2
 	gcc src/level_2/level_2.c ./bin/lparser.o ./bin/lcopy.o -Wall -ansi -o ./bin/synchronizer  -lpthread	

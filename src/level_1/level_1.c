@@ -95,7 +95,7 @@ void connectman(char **tab_addr,int length) {
 				    
 				    Data * data = decode(messge, &length);
 				    
-				    me_data = filter_and_replace(me_data, &nb_of_me_data, data, &length);
+				    me_data = filter_and_replace(me_data, &nb_of_me_data, data, length);
 				    
 				    free_data(data,length);
 				} 
