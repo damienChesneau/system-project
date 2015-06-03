@@ -33,7 +33,7 @@ char* encode(Data * data, int length) {
     for (i = 0; i < length; i++) {
         d = appendTo(d, "--++[++----++#++--");
         d = appendTo(d, data[i].path);
-        char buf[255];
+        char buf[256];
         sprintf(buf, "%d", data[i].timestamp);
         d = appendTo(d, "--++#++--");
         d = appendTo(d, buf);
@@ -52,8 +52,8 @@ Data * decode(const char * data,int * nb) {
     int length = (int) strlen(data);
     char * newData = (char*) &data[0];
     int i = 0, nb_of_data = 0, nb_of_sharps = 0;
-    char path [200];
-    path[199] = '\0';
+    char path [PATH_SIZE];
+    path[PATH_SIZE - 1] = '\0';
     int pos1, pos2, pos3=0, occurs = 0;
     
     for (i = 0; i < length; i++) {

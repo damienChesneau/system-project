@@ -14,9 +14,7 @@
 #define PORT 2022 /* 3450 a 3650 */
 #define PORT_OFFSET 10
 #define BUF 256
-/*
-Level 1: Each repository has an execution of this program (multiple instances) and we must synchronize them.
-*/
+
 int setAcceptSocket(struct sockaddr_in* serv, int socket_fd);
 int getSockAddr(int port, struct sockaddr_in* serv);
 const char* ip_addr = "127.0.0.1";
@@ -28,7 +26,6 @@ void * connexion_manager(void *arg);
 
 void connectman(char **tab_addr,int length) {
     
-   /* char **tab_addr = (char **) arg;*/
     int nb_ip = length;
     int  nb_of_me_data;
     
@@ -38,7 +35,7 @@ void connectman(char **tab_addr,int length) {
     
     struct in_addr local;
     
-	/*printf("OK\n");*/
+	
     if(inet_aton("127.0.0.1",&local) == -1){
     	perror("connectman");
     	return;
@@ -54,7 +51,7 @@ void connectman(char **tab_addr,int length) {
         int j = 0;
         for(j = 0; j<=PORT_OFFSET; j++){
     
-			/*printf("OK\n");*/
+			
 		    if((socket_fd[i][j] = socket(AF_INET, SOCK_STREAM, 0)) == -1){
 		    	perror("connectman");
 		    	return;
@@ -65,7 +62,7 @@ void connectman(char **tab_addr,int length) {
 		        return;
 		    }
 			
-			/*printf("OK\n");*/
+			
 		    if (inet_aton(tab_addr[i], &(addr[i][j].sin_addr.s_addr)) == -1) {
 		        perror("connectman");
 		        return;
@@ -80,7 +77,7 @@ void connectman(char **tab_addr,int length) {
 				    	perror("connectman");
     					return;
 				    }
-				    /*printf("OK\n");*/
+				    
 				    int strlen_message = -1;
 				    if (read(socket_fd[i][j], &strlen_message, sizeof (int)) == -1) {
 				        perror("connectman");
@@ -88,27 +85,25 @@ void connectman(char **tab_addr,int length) {
 				    }
 				    char messge[strlen_message];
 				    
-				   	/*printf("OK\n");*/
+				   	
 				    if(read(socket_fd[i][j], &messge, strlen_message) == -1){
 				    	perror("connectman");
     					return;
 				    }
 				    
 				    int length = -1;
-				    /*printf("OK\n");*/
+				    
 				    Data * data = decode(messge, &length);
 				    
 				    filter_and_replace(me_data, &nb_of_me_data, data, &length);
 				    
 				    free_data(data,length);
-				} else {
-				    /*printf("not connected :( \n");*/
-				}
+				} 
 		    }
 			
         }
     }
-    /*printf("OK\n");*/
+    
     char * encoded_data = encode(me_data, nb_of_me_data);
     int size = strlen(encoded_data) +1;
     
@@ -119,13 +114,13 @@ void connectman(char **tab_addr,int length) {
         	if(connect_ret[i][j] != -1){
         		if(addr[i][j].sin_addr.s_addr != local.s_addr || htons(addr[i][j].sin_port) != port_now){
 				    
-				    /*printf("OK\n");*/
+				    
 				    if(write(socket_fd[i][j],&size,sizeof(int)) == -1){
 				    	perror("connectman");
     					return;
 				   	}
 				   	
-				    /*printf("OK\n");*/
+				    
 				    if(write(socket_fd[i][j],encoded_data,size) == -1){
 				    	perror("connectman");
     					return;
@@ -141,7 +136,7 @@ void connectman(char **tab_addr,int length) {
     
 	printf("%s\n",encoded_data);
 	
-	/*printf("OK\n");*/
+	
 	if(update_folder(to_syc,me_data,nb_of_me_data) == -1){
 		perror("connectman");
     	return;
@@ -170,9 +165,9 @@ void * connexion_manager(void *arg) {
             int nb = 0;
             to_syc = "./files_to_sync";
             Data * data = get_data_form_dir( to_syc, &nb);
-            /*printf("OK\n");*/
+            
             char * encodeed_message = encode(data, nb);
-            /*printf("OK\n");*/
+            
             int strlen_message = strlen(encodeed_message)+1;
             if(write(newSock, &strlen_message, sizeof (int)) == -1){
             	perror("connexion_manager");
@@ -259,7 +254,7 @@ int main(int argc, char* argv[]) {
      	return EXIT_FAILURE;
      }
     }
-    /*char * ips[argc+1];*/
+    
     pthread_t thread1;
     
     if (pthread_create(&thread1, NULL, switchman, NULL) == -1) {
@@ -285,15 +280,7 @@ int main(int argc, char* argv[]) {
     while (1) {
         sleep(1000);
     }
-    /*  if (inet_aton(ip_addr, &(addr.sin_addr.s_addr)) == -1) {
-    //            perror(argv[0]);
-    //            return EXIT_FAILURE;
-    //        }
-    //        if (connect(socket_fd, (struct sockaddr *) &addr, sizeof (struct sockaddr)) == -1) {
-    //            perror(argv[0]);
-    //            return EXIT_FAILURE;
-    //        }
-    //        write(socket_fd, ip_addr, 10);*/
+    
     return EXIT_SUCCESS;
 }
 

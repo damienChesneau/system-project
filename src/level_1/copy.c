@@ -26,12 +26,12 @@ int update_folder(char * dir,Data * data, int size){
 	int i = 0;
 	for(i = 0; i<size; i++){
 		
-		char path[510];
+		char path[PATH_SIZE*2];
 		
 		if(dir[strlen(dir)-1] == '/'){
-			snprintf(path,510,"%s%s",dir,data[i].path);
+			snprintf(path,PATH_SIZE*2,"%s%s",dir,data[i].path);
 		}else{
-			snprintf(path,510,"%s/%s",dir,data[i].path);
+			snprintf(path,PATH_SIZE*2,"%s/%s",dir,data[i].path);
 		}
 		
 		int fd = creat(path,get_mode(dir));
@@ -51,106 +51,6 @@ int update_folder(char * dir,Data * data, int size){
 	
 	return EXIT_SUCCESS;
 }
-
-int fd_open_out(int fd_in, struct dirent* file) {
-    int fd_out;
-    if (isDirectory(file, file->d_name)) {
-        /*Create the directory */
-    } else {
-
-        if ((fd_out = creat(file->d_name, O_WRONLY)) == EXIT_FAILURE) {
-            perror("copy_out");
-            return EXIT_FAILURE;
-        }
-
-        if (copy(fd_out, fd_in) == EXIT_FAILURE) {
-            perror("fd_open_in");
-            return EXIT_FAILURE;
-        }
-    }
-
-    return EXIT_SUCCESS;
-}
-
-int fd_open_in(int fd_out, struct dirent* file) {
-    int fd_in;
-    if (isDirectory(file, file->d_name)) {
-        /*Create the directory */
-    } else {
-
-        if ((fd_in = open(file->d_name, O_RDONLY)) == EXIT_FAILURE) {
-            perror("fd_open_in");
-            return EXIT_FAILURE;
-        }
-
-        if (copy(fd_out, fd_in) == EXIT_FAILURE) {
-            perror("fd_open_in");
-            return EXIT_FAILURE;
-        }
-    }
-
-    return EXIT_SUCCESS;
-}
-
-int copy(int fd_in, int fd_out) {
-    int nb_reads;
-    char buffer[10];
-
-
-    while ((nb_reads = read(fd_in, buffer, 10)) == 10) {
-
-        if (write(fd_out, buffer, 10) == EXIT_FAILURE) {
-            perror("copy");
-            return EXIT_FAILURE;
-        }
-    }
-
-    if (nb_reads == -1) {
-        perror("copy");
-        return EXIT_FAILURE;
-    } else {
-        if (write(fd_out, buffer, nb_reads) == EXIT_FAILURE) {
-            perror("copy");
-            return EXIT_FAILURE;
-        }
-    }
-
-    return EXIT_SUCCESS;
-}
-
-int copy_all(int fd, Fd_open func) {
-    struct dirent ** reader;
-    int nb_file;
-    int i;
-
-    if ((nb_file = scandir("./", &reader, NULL, alphasort)) == EXIT_FAILURE) {
-        perror("copy_all");
-        return EXIT_FAILURE;
-    }
-
-    for (i = 0; i < nb_file; i++) {
-        if (func(fd, reader[i]) == EXIT_FAILURE) {
-            perror("copy_all");
-            return EXIT_FAILURE;
-        }
-    }
-
-    return EXIT_SUCCESS;
-}
-
-int isDirectory(struct dirent* info, char* path) {
-    struct stat fich;
-
-    if (stat(path, &fich) == EXIT_FAILURE) {
-        perror("isDirectory");
-        return EXIT_FAILURE;
-    }
-
-    if (S_ISDIR(fich.st_mode))
-        return 1;
-    return 0;
-}
-
 int count_dir_files(const char * dir) {
     int nbr = 0;
     DIR * repertory = opendir(dir);
@@ -183,13 +83,11 @@ char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
         int i = 0;
         while (readedFile = readdir(repertory)) {
             if (strcmp(readedFile->d_name, ".") != 0 && strcmp(readedFile->d_name, "..") != 0) {
-                /*files[i] = readedFile->d_name;*/
                 if((files[i] = (char *)malloc((sizeof(char)*strlen(readedFile->d_name))+1)) == NULL){
                 	perror("get_all_files_from_dir");
                 	return NULL;
                 }
                 strncpy(files[i],readedFile->d_name,strlen(readedFile->d_name));
-                //printf("%s\n",files[i]);
                 i++;
             }
         }
@@ -198,7 +96,6 @@ char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
         }
     }
     closedir(repertory);
-    //    return (char**) files;
     return NULL;
 }
 
@@ -226,7 +123,7 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
     int count = count_dir_files(dir);
     int i = 0;
     *nb_of_datas = count;
-    char new_dir[255];
+    char new_dir[PATH_SIZE];
     strcpy(new_dir, dir);
     if (new_dir[strlen(new_dir) - 1] != '/') {
         strcat(new_dir, "/");
@@ -240,7 +137,7 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
     char** t = get_all_files_from_dir(new_dir, count, files);
     for (i = 0; i < count; i++) {
         char * buffer;
-        char tmp[255]; 
+        char tmp[PATH_SIZE]; 
         strcpy(tmp, new_dir);
         strcat(tmp, files[i]);
         strcpy(datas[i].path, files[i]);
@@ -262,10 +159,7 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
 
 int get_timestamp_of_file(char * filename) {
     struct stat st;
-    if(stat(filename, &st) == -1){
-    	/*perror("get_timestamp_of_file");
-    	return EXIT_FAILURE;*/
-    }
+    stat(filename, &st);
     return st.st_mtime;
 }
 
@@ -288,7 +182,7 @@ void filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int *le
   	for(i = 0; i<max; i++){
   		int is_replaced = 0;
   		for(j = 0; j<min ; j++){
-  			if(!is_replaced && strncmp(dmin[j].path,dmax[i].path,255) == 0){
+  			if(!is_replaced && strncmp(dmin[j].path,dmax[i].path,PATH_SIZE) == 0){
   				is_replaced = 1;
   				if(dmin[j].timestamp > dmax[i].timestamp){
   					dmax[i].timestamp = dmin[j].timestamp;
@@ -307,7 +201,7 @@ void filter_and_replace(Data * me_data, int *nb_of_me_data, Data * data, int *le
   		if(!is_replaced){
   			added++;
   			dmin = realloc(dmin,(min+added)*sizeof(Data));
-  			strncpy(dmin[min+added-1].path,dmax[j].path,255);
+  			strncpy(dmin[min+added-1].path,dmax[j].path,PATH_SIZE);
   			dmin[min+added-1].timestamp = dmax[j].timestamp;
   			
   			if((dmin[min+added-1].data = malloc((sizeof(char)*strlen(dmax[i].data))+1)) == NULL){

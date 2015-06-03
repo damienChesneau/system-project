@@ -1,6 +1,6 @@
-
+#define PATH_SIZE 256
 typedef struct data {
-    char path[255];/*FILE NAME*/
+    char path[PATH_SIZE];/*FILE NAME*/
     int timestamp; /* DATE OF LASTEST UPDATE */
     char * data; /* FILE DATA */
 } Data;
