@@ -29,7 +29,7 @@ void connectman(char **tab_addr,int length) {
     int nb_ip = length;
     int  nb_of_me_data;
     
-    to_syc = "./files_to_sync2";
+    to_syc = "./";
     
     Data * me_data = get_data_form_dir(to_syc,&nb_of_me_data);
     
@@ -163,7 +163,7 @@ void * connexion_manager(void *arg) {
         
         if (strcmp(buff, firstmessage) == 0) {
             int nb = 0;
-            to_syc = "./files_to_sync";
+            to_syc = "./";
             Data * data = get_data_form_dir( to_syc, &nb);
             
             char * encodeed_message = encode(data, nb);
