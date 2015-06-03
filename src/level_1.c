@@ -37,8 +37,11 @@ void connectman(char **tab_addr,int length) {
     Data * me_data = get_data_form_dir(to_syc,&nb_of_me_data);
     
     struct in_addr local;
+    
+	/*printf("OK\n");*/
     if(inet_aton("127.0.0.1",&local) == -1){
     	perror("connectman");
+    	return;
     }
     
     
@@ -51,6 +54,7 @@ void connectman(char **tab_addr,int length) {
         int j = 0;
         for(j = 0; j<=PORT_OFFSET; j++){
     
+			/*printf("OK\n");*/
 		    if((socket_fd[i][j] = socket(AF_INET, SOCK_STREAM, 0)) == -1){
 		    	perror("connectman");
 		    	return;
@@ -60,7 +64,8 @@ void connectman(char **tab_addr,int length) {
 		        perror("GET SOCK ADDR");
 		        return;
 		    }
-
+			
+			/*printf("OK\n");*/
 		    if (inet_aton(tab_addr[i], &(addr[i][j].sin_addr.s_addr)) == -1) {
 		        perror("connectman");
 		        return;
@@ -73,20 +78,24 @@ void connectman(char **tab_addr,int length) {
 				    
 				    if(write(socket_fd[i][j], firstmessage, strlen(firstmessage)) == -1){
 				    	perror("connectman");
+    					return;
 				    }
-				    
+				    /*printf("OK\n");*/
 				    int strlen_message = -1;
 				    if (read(socket_fd[i][j], &strlen_message, sizeof (int)) == -1) {
 				        perror("connectman");
+    					return;
 				    }
 				    char messge[strlen_message];
 				    
+				   	/*printf("OK\n");*/
 				    if(read(socket_fd[i][j], &messge, strlen_message) == -1){
 				    	perror("connectman");
+    					return;
 				    }
 				    
 				    int length = -1;
-				    
+				    /*printf("OK\n");*/
 				    Data * data = decode(messge, &length);
 				    
 				    filter_and_replace(me_data, &nb_of_me_data, data, &length);
@@ -99,7 +108,7 @@ void connectman(char **tab_addr,int length) {
 			
         }
     }
-    
+    /*printf("OK\n");*/
     char * encoded_data = encode(me_data, nb_of_me_data);
     int size = strlen(encoded_data) +1;
     
@@ -110,12 +119,16 @@ void connectman(char **tab_addr,int length) {
         	if(connect_ret[i][j] != -1){
         		if(addr[i][j].sin_addr.s_addr != local.s_addr || htons(addr[i][j].sin_port) != port_now){
 				    
+				    /*printf("OK\n");*/
 				    if(write(socket_fd[i][j],&size,sizeof(int)) == -1){
 				    	perror("connectman");
+    					return;
 				   	}
 				   	
+				    /*printf("OK\n");*/
 				    if(write(socket_fd[i][j],encoded_data,size) == -1){
 				    	perror("connectman");
+    					return;
 				    };
 				    
 				   	close(socket_fd[i][j]);
@@ -128,8 +141,10 @@ void connectman(char **tab_addr,int length) {
     
 	printf("%s\n",encoded_data);
 	
+	/*printf("OK\n");*/
 	if(update_folder(to_syc,me_data,nb_of_me_data) == -1){
 		perror("connectman");
+    	return;
 	}
 	
 	free_encoded_message(encoded_data);
@@ -155,10 +170,10 @@ void * connexion_manager(void *arg) {
             int nb = 0;
             to_syc = "./files_to_sync";
             Data * data = get_data_form_dir( to_syc, &nb);
-            
+            /*printf("OK\n");*/
             char * encodeed_message = encode(data, nb);
+            /*printf("OK\n");*/
             int strlen_message = strlen(encodeed_message)+1;
-            
             if(write(newSock, &strlen_message, sizeof (int)) == -1){
             	perror("connexion_manager");
             }

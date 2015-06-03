@@ -21,7 +21,7 @@ char* appendTo(char * dest, const char *s) {
 }
 
 char* encode(Data * data, int length) {
-    char * d;
+    char * d = NULL;
     if((d = malloc(sizeof(char)*2)) == NULL){
     	perror("encode");
     	return NULL;
@@ -31,15 +31,15 @@ char* encode(Data * data, int length) {
     d[1] = '\0';
     int i = 0;
     for (i = 0; i < length; i++) {
-        d = appendTo(d, "[#");
+        d = appendTo(d, "--++[++----++#++--");
         d = appendTo(d, data[i].path);
         char buf[255];
         sprintf(buf, "%d", data[i].timestamp);
-        d = appendTo(d, "#");
+        d = appendTo(d, "--++#++--");
         d = appendTo(d, buf);
-        d = appendTo(d, "#");
+        d = appendTo(d, "--++#++--");
         d = appendTo(d, data[i].data);
-        d = appendTo(d, "]");
+        d = appendTo(d, "--++]++--");
         if (i != length - 1) {
             d = appendTo(d, ",");
         }
@@ -69,31 +69,31 @@ Data * decode(const char * data,int * nb) {
     }
     
     for (i = 0; i < length; i++) {
-        if (newData[i] == '#') {
+        if (newData[i-4] == '-' && newData[i-3] == '-' && newData[i-2] == '+'&& newData[i-1] == '+' && newData[i] == '#' && newData[i+1] == '+'&& newData[i+2] == '+'&& newData[i+3] == '-'&& newData[i+4] == '-') {
             nb_of_sharps++;
             switch (nb_of_sharps) {
                 case 1:
-                    pos1 = i + 1;
+                    pos1 = i + 5;
                     break;
                 case 2:
-                    pos2 = i + 1;
-                    int len = i - pos1;
+                    pos2 = i + 5;
+                    int len = i - pos1 - 4;
                     strncpy(path, &newData[pos1], len);
                     path[len] = '\0';
                     
-                    strncpy(datatoret[occurs].path, path, strlen(path) + 1);
+                    strncpy(datatoret[occurs].path, path, strlen(path)+1);
                     break;
                 case 3:
-                    pos3 = i + 1;
-                    int len2 = i - pos2;
+                    pos3 = i + 5;
+                    int len2 = i - pos2-4;
                     strncpy(path, &newData[pos2], len2);
                     path[len2] = '\0';
                     int tra = atoi(path);
                     datatoret[occurs].timestamp = tra;
                     break;
             }
-        } else if (newData[i] == ']') {
-            int len3 = i - pos3;
+        } else if (newData[i-4] == '-' && newData[i-3] == '-' && newData[i-2] == '+'&& newData[i-1] == '+' && newData[i] == ']' && newData[i+1] == '+'&& newData[i+2] == '+'&& newData[i+3] == '-'&& newData[i+4] == '-') {
+            int len3 = i - pos3-4;
            	char * strBuf;
             if((strBuf = malloc((sizeof(char)*len3) + 1)) == NULL){
             	perror("decode");
