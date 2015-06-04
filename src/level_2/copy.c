@@ -16,119 +16,133 @@ int get_timestamp_of_file(char * filename);
 void print_data(Data * me_data,int size){
 	int i;	
 	for(i = 0; i<size; i++){
-		printf("TTTTTTTTTTTTTTTTTT%s\n",me_data[i].path);
+		printf("Print nb %d:\t%s\n",i,me_data[i].path);
 	}
+}
+
+int is_directory(const char * filename){
+    struct stat st;
+    stat(filename, &st);
+    return S_ISDIR(st.st_mode);
 }
 
 int get_mode(char * filename) {
     struct stat st;
-    if(stat(filename, &st) == -1){
-    	perror("get_mode");
-    	return EXIT_FAILURE;
-    }
+    stat(filename, &st);
     return st.st_mode;
 }
 
-int update_folder(char * dir,Data * data, int size){
+int update_folder(Data * data, int size){
 	int i = 0;
 	for(i = 0; i<size; i++){
+		if(!is_directory){
+			int fd = creat(data[i].path,data[i].mode);
+			printf("%s\n",data[i].path);
+			if(fd == -1){
+				perror("update_folder");
+				return EXIT_FAILURE;
+			}
 		
-		char path[PATH_SIZE*2];
-		
-		if(dir[strlen(dir)-1] == '/'){
-			snprintf(path,PATH_SIZE*2,"%s%s",dir,data[i].path);
+			if(write(fd,data[i].data,strlen(data[i].data)) == -1){
+				perror("update_folder");
+				return EXIT_FAILURE;
+			}
+			close(fd);
 		}else{
-			snprintf(path,PATH_SIZE*2,"%s/%s",dir,data[i].path);
+			printf("%s\n",data[i].path);
+			mkdir(data[i].path,data[i].mode);
 		}
-		
-		int fd = creat(path,data[i].mode);
-		printf("%s\n",path);
-		if(fd == -1){
-			perror("update_folder");
-			return EXIT_FAILURE;
-		}
-		
-		if(write(fd,data[i].data,strlen(data[i].data)) == -1){
-			perror("update_folder");
-			return EXIT_FAILURE;
-		}
-		close(fd);
 	
 	}	
 	
 	return EXIT_SUCCESS;
 }
+
 int count_dir_files(const char * dir) {
     int nbr = 0;
     DIR * repertory = opendir(dir);
     if (!repertory) {
-        perror("opendir() failed");
+    	printf("%s\n",dir);
+        perror("opendir() failed ");
     } else {
         struct dirent * readedFile = NULL;
-        errno = 0;
         int i = 0;
         while (readedFile = readdir(repertory)) {
-        	if(readedFile->d_type != DT_DIR){
-		        if (strcmp(readedFile->d_name,"synchronizer") != 0 && readedFile->d_name[0] != '.') {
-                	nbr++;
-                }
+	        if (strcmp(readedFile->d_name,"synchronizer") != 0 && readedFile->d_name[0] != '.') {
+            	nbr++;
+            	/*printf("%s\n",readedFile->d_name);*/
+            	
+				if(readedFile->d_type == DT_DIR){
+					int len  = strlen(dir)+strlen(readedFile->d_name)+2;
+					char temp[len];
+					strncpy(temp,dir,len);
+					strncat(temp,readedFile->d_name,len);
+					temp[len-2] = '/';
+					nbr += count_dir_files(temp);
+				}
             }
         }
-        if (errno) {
-            perror("readdir() failed");
-        }
+        
     }
     closedir(repertory);
     return nbr;
 }
 
-char** get_all_files_from_dir(const char * dir, int nb_of_data, char ** files) {
+char** get_all_files_from_dir(const char * dir, int * i, char ** files) {
     DIR * repertory = opendir(dir);
     if (!repertory) {
         perror("opendir() failed");
     } else {
         struct dirent * readedFile = NULL;
-        errno = 0;
-        int i = 0;
         while (readedFile = readdir(repertory)) {
-        	if(readedFile->d_type != DT_DIR){
-		        if (strcmp(readedFile->d_name,"synchronizer") != 0 && readedFile->d_name[0] != '.') {
-		            if((files[i] = (char *)malloc((sizeof(char)*strlen(readedFile->d_name))+1)) == NULL){
-		            	perror("get_all_files_from_dir");
-		            	return NULL;
-		            }
-		            strncpy(files[i],readedFile->d_name,strlen(readedFile->d_name));
-		            i++;
-		        }
-            }else{
-            	/*printf("%s\n",readedFile->d_name);*/
-            }
+	        if (strcmp(readedFile->d_name,"synchronizer") != 0 && readedFile->d_name[0] != '.') {
+				int len  = strlen(dir)+strlen(readedFile->d_name)+1;
+	            if((files[*i] = (char *)malloc(sizeof(char)*len)) == NULL){
+	            	perror("get_all_files_from_dir");
+	            	return NULL;
+	            }
+				strncpy(files[*i],dir,len);
+	            strncat(files[*i],readedFile->d_name,len);
+	            /*printf("%s\t%d\n",files[*i],*i);*/
+	            (*i) = (*i)+1;
+				if(readedFile->d_type == DT_DIR){
+					len ++;
+					char temp[len];
+					strncpy(temp,files[(*i)-1],len);
+					temp[len-2] = '/';
+					get_all_files_from_dir(temp,i,files);
+				}
+	        }
         }
-        if (errno) {
-            perror("readdir() failed");
-        }
-        /*printf("%d\n",i);*/
     }
     closedir(repertory);
     return NULL;
 }
 
 void get_data_from_file(const char * filename, char ** buffer) {
-    long length;
-    FILE * f = fopen(filename, "rb");
-    if (f) {
-        fseek(f, 0, SEEK_END);
-        length = ftell(f);
-        fseek(f, 0, SEEK_SET);
-        if((*buffer = malloc((sizeof(char)*length)+1)) == NULL){
-        	perror("get_data_from_files");
-        	return;
-        }
-        if (*buffer) {
-            fread(*buffer, 1, length, f);
-        }
-        (*buffer)[length] = '\0';
-        fclose(f);
+    if(!is_directory(filename)){
+    	long length;
+		FILE * f = fopen(filename, "rb");
+		if (f) {
+		    fseek(f, 0, SEEK_END);
+		    length = ftell(f);
+		    fseek(f, 0, SEEK_SET);
+		    if((*buffer = malloc((sizeof(char)*length)+1)) == NULL){
+		    	perror("get_data_from_files");
+		    	return;
+		    }
+		    if (*buffer) {
+		        fread(*buffer, 1, length, f);
+		    }
+		    (*buffer)[length] = '\0';
+		    fclose(f);
+		}
+    }else{
+    	if((*buffer = malloc((sizeof(char)*20)+1)) == NULL){
+		    	perror("get_data_from_files");
+		    	return;
+		}
+    	strncpy(*buffer,"<<<<<DIRECTORY>>>>>",20);
     }
 }
 
@@ -147,14 +161,16 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
    		return NULL;
    	}
     char * files[count];
-    char** t = get_all_files_from_dir(new_dir, count, files);
+    char** t = get_all_files_from_dir(new_dir, &i, files);
     for (i = 0; i < count; i++) {
         char * buffer;
-        char tmp[PATH_SIZE]; 
+        /*char tmp[PATH_SIZE]; 
         strcpy(tmp, new_dir);
-        strcat(tmp, files[i]);
+        strcat(tmp, files[i]);*/
+        /*printf("%s\n",files[i]);*/
         strcpy(datas[i].path, files[i]);
-        get_data_from_file(tmp, &buffer);
+        strcpy(datas[i].path,files[i]);
+        get_data_from_file(files[i], &buffer);
         
         if((datas[i].data = malloc((sizeof(char)*strlen(buffer))+1)) == NULL){
         	perror("get_data_from_dir");
@@ -162,12 +178,17 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
         }
         
         strcpy(datas[i].data, buffer); 
-        datas[i].timestamp =  get_timestamp_of_file(tmp);  
-        datas[i].mode = get_mode(tmp);
+        datas[i].timestamp =  get_timestamp_of_file(files[i]);  
+        datas[i].mode = get_mode(files[i]);
+    	/*printf("OKA\t%s\t%d\n",files[i],i);*/
         free(buffer);
+    	/*printf("OK%d\n",i);*/
         free(files[i]);
+    	/*printf("OKB%d\n",i);*/
         files[i] = NULL;
+        
     }   
+    /*printf("PLOP\n");*/
     return datas;
 }
 

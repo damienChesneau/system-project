@@ -62,7 +62,7 @@ Data * decode(const char * data,int * nb) {
     int pos1 = 0, pos2 = 0, pos3 = 0,pos4 = 0, occurs = 0;
     
     for (i = 0; i < length; i++) {
-        if (newData[i] == '[') {
+        if (i > 3 && newData[i-4] == '-' && newData[i-3] == '-' && newData[i-2] == '+'&& newData[i-1] == '+' && newData[i] == '[' && newData[i+1] == '+'&& newData[i+2] == '+'&& newData[i+3] == '-'&& newData[i+4] == '-') {
             nb_of_data++;
         }
     }

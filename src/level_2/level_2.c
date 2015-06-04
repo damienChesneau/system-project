@@ -94,14 +94,14 @@ void connectman(char **tab_addr,int length) {
     					return;
 				    }
 				    
+				    /*printf("%s\n\n\n",messge);*/
 				    int length = -1;
 				    Data * data = decode(messge, &length);
 				    
-				    print_data(me_data,nb_of_me_data);
-				    printf("OK\n");
-				    print_data(data,length);
+				    /*print_data(me_data,nb_of_me_data);
+				    print_data(data,length);*/
 				    me_data = filter_and_replace(me_data, &nb_of_me_data, data, length);
-				    print_data(me_data,nb_of_me_data);
+				    /*print_data(me_data,nb_of_me_data);*/
 				    free_data(data,length);
 				} else {
 				    /*printf("not connected :( \n");*/
@@ -111,7 +111,7 @@ void connectman(char **tab_addr,int length) {
         }
     }
     char * encoded_data = encode(me_data, nb_of_me_data);
-    printf("OK\n");
+    /*printf("OK\n");*/
     int size = strlen(encoded_data) +1;
     
     for (i = 0; i < nb_ip; i++) {
@@ -141,10 +141,10 @@ void connectman(char **tab_addr,int length) {
     
     }
     
-	printf("%s\n",encoded_data);
+	/*printf("%s\n",encoded_data);*/
 	
 	/*printf("OK\n");*/
-	if(update_folder(to_syc,me_data,nb_of_me_data) == -1){
+	if(update_folder(me_data,nb_of_me_data) == -1){
 		perror("connectman");
     	return;
 	}
@@ -200,9 +200,9 @@ void * connexion_manager(void *arg) {
             }
             
             data = decode(msg,&nb);
-            printf("%s\n",msg);
+            /*printf("%s\n",msg);*/
             
-            if(update_folder(to_syc,data,nb) == -1){
+            if(update_folder(data,nb) == -1){
             	perror("connexion_manager");
             }
             
