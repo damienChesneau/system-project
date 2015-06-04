@@ -1,16 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include "copy.h"
-#include <errno.h>
-#include <string.h>
 
-#define _BSD_SOURCE  1
-
-#define _SVID_SOURCE 1
 int get_timestamp_of_file(char * filename);
 
 void print_data(Data * me_data,int size){
