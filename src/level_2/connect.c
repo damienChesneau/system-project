@@ -175,6 +175,7 @@ void connectman(char **tab_addr,int length) {
     
     }
     
+	free_encoded_message(encoded_data);
 	/*printf("%s\n",encoded_data);*/
 	
 	/*printf("OK\n");*/
@@ -183,7 +184,6 @@ void connectman(char **tab_addr,int length) {
     	return;
 	}
 	
-	free_encoded_message(encoded_data);
 	free_data(me_data,nb_of_me_data);
 	
 	for(i = 0; i<nb_ip;i++){
@@ -209,6 +209,7 @@ void * connexion_manager(void *arg) {
             Data * data = get_data_form_dir( to_syc, &nb);
             /*printf("OK\n");*/
             char * encodeed_message = encode(data, nb);
+            free_data(data,nb);
             /*printf("OK\n");*/
             int strlen_message = strlen(encodeed_message)+1;
             if(write(newSock, &strlen_message, sizeof (int)) == -1){
@@ -222,9 +223,9 @@ void * connexion_manager(void *arg) {
    				pthread_exit(NULL);
             }*/
             
+            free_encoded_message(encodeed_message);
             /*printf("%s\n",encodeed_message);*/
             printf("Recuperation of files...\n");
-            free_data(data,nb);
             int size = -1;
            	
            	if(read(newSock,&size,sizeof(int)) == -1){
@@ -255,7 +256,6 @@ void * connexion_manager(void *arg) {
    				pthread_exit(NULL);
             }
             
-            free_encoded_message(encodeed_message);
             free_data(data,nb);
             close(newSock);
         }
