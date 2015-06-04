@@ -24,7 +24,7 @@ void write_encoded_message(int fd,char * message,int length){
 	nb_writes += written;
 	
 	if(nb_writes != length){
-		printf("Error, all data hasn't been downloaded\n");
+		printf("Error, all data hasn't been uploaded\n");
 	}
 }
 
