@@ -24,7 +24,7 @@ void write_encoded_message(int fd,char * message,int length){
 	nb_writes += written;
 	
 	if(nb_writes != length){
-		perror("write_encoded_message");
+		printf("Error, all data hasn't been downloaded\n");
 	}
 }
 
@@ -49,7 +49,7 @@ void read_encoded_message(int fd,char * message,int length){
 	nb_reads += readed;
 	
 	if(nb_reads != length){
-		perror("read_encoded_message");
+		printf("Error, all data hasn't been downloaded\n");
 	}
 }
 
