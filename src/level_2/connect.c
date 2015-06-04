@@ -7,17 +7,24 @@ void write_encoded_message(int fd,char * message,int length){
 	int nb_pack = length / PACK_SIZE;
 	int last_pack = length % PACK_SIZE;
 	int i;
-	
+	int nb_writes = 0;
+	int written = 0;
 	for( i = 0; i<nb_pack; i++){
-		if(write(fd, message + (i*PACK_SIZE), PACK_SIZE) == -1){
+		if((written = write(fd, message + (i*PACK_SIZE), PACK_SIZE)) == -1){
 			perror("write_encoded_message");
 			return;
 		}
+		nb_writes += written;
 	}
 	
-	if(write(fd, message + (i*PACK_SIZE), last_pack) == -1){
+	if((written = write(fd, message + (i*PACK_SIZE), last_pack)) == -1){
 		perror("write_encoded_message");
 		return;
+	}
+	nb_writes += written;
+	
+	if(nb_writes != length){
+		perror("write_encoded_message");
 	}
 }
 
@@ -25,17 +32,24 @@ void read_encoded_message(int fd,char * message,int length){
 	int nb_pack = length / PACK_SIZE;
 	int last_pack = length % PACK_SIZE;
 	int i;
-	
+	int nb_reads = 0;
+	int readed = 0;
 	for( i = 0; i<nb_pack; i++){
-		if(read(fd, message + (i*PACK_SIZE), PACK_SIZE) == -1){
+		if((readed = read(fd, message + (i*PACK_SIZE), PACK_SIZE)) == -1){
 			perror("read_encoded_message");
 			return;
 		}
+		nb_reads += readed;
 	}
 	
-	if(read(fd, message + (i*PACK_SIZE), last_pack) == -1){
+	if((readed = read(fd, message + (i*PACK_SIZE), last_pack)) == -1){
 		perror("read_encoded_message");
 		return;
+	}
+	nb_reads += readed;
+	
+	if(nb_reads != length){
+		perror("read_encoded_message");
 	}
 }
 
