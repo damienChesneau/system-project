@@ -14,17 +14,59 @@
 #define PORT 2022 /* 3450 a 3650 */
 #define PORT_OFFSET 10
 #define BUF 256
+#define PACK_SIZE 2000
 /*
 Level 1: Each repository has an execution of this program (multiple instances) and we must synchronize them.
 */
 int setAcceptSocket(struct sockaddr_in* serv, int socket_fd);
 int getSockAddr(int port, struct sockaddr_in* serv);
+void write_encoded_message(int fd,char * message,int length);
+void read_encoded_message(int fd,char * message,int length);
+
+
 const char* ip_addr = "127.0.0.1";
 const char* firstmessage = "Hello, I want all your data please :)";
 int port_now = -1;
 char * to_syc;
 void * connexion_manager(void *arg);
 
+
+
+void write_encoded_message(int fd,char * message,int length){
+	int nb_pack = length / PACK_SIZE;
+	int last_pack = length % PACK_SIZE;
+	int i;
+	
+	for( i = 0; i<nb_pack; i++){
+		if(write(fd, message + (i*PACK_SIZE), PACK_SIZE) == -1){
+			perror("write_encoded_message");
+			return;
+		}
+	}
+	
+	if(write(fd, message + (i*PACK_SIZE), last_pack) == -1){
+		perror("write_encoded_message");
+		return;
+	}
+}
+
+void read_encoded_message(int fd,char * message,int length){
+	int nb_pack = length / PACK_SIZE;
+	int last_pack = length % PACK_SIZE;
+	int i;
+	
+	for( i = 0; i<nb_pack; i++){
+		if(read(fd, message + (i*PACK_SIZE), PACK_SIZE) == -1){
+			perror("read_encoded_message");
+			return;
+		}
+	}
+	
+	if(read(fd, message + (i*PACK_SIZE), last_pack) == -1){
+		perror("read_encoded_message");
+		return;
+	}
+}
 
 void connectman(char **tab_addr,int length) {
     
@@ -86,14 +128,20 @@ void connectman(char **tab_addr,int length) {
 				        perror("connectman");
     					return;
 				    }
-				    char messge[strlen_message];
 				    
-				   	/*printf("OK\n");*/
-				    if(read(socket_fd[i][j], &messge, strlen_message) == -1){
-				    	perror("connectman");
+				    /*char messge[strlen_message];*/
+				    char * messge;
+				    if((messge = malloc(sizeof(char)*strlen_message)) == NULL){
+				        perror("connectman");
     					return;
 				    }
-				    
+				   	/*printf("OK\n");*/
+				   	read_encoded_message(socket_fd[i][j],messge,strlen_message);
+				    /*if(read(socket_fd[i][j], &messge, strlen_message) == -1){
+				    	perror("connectman");
+    					return;
+				    }*/
+				   
 				    /*printf("%s\n\n\n",messge);*/
 				    int length = -1;
 				    Data * data = decode(messge, &length);
@@ -102,6 +150,7 @@ void connectman(char **tab_addr,int length) {
 				    print_data(data,length);*/
 				    me_data = filter_and_replace(me_data, &nb_of_me_data, data, length);
 				    /*print_data(me_data,nb_of_me_data);*/
+				    free(messge);
 				    free_data(data,length);
 				} else {
 				    /*printf("not connected :( \n");*/
@@ -128,10 +177,11 @@ void connectman(char **tab_addr,int length) {
 				   	}
 				   	
 				    /*printf("OK\n");*/
-				    if(write(socket_fd[i][j],encoded_data,size) == -1){
+            		write_encoded_message(socket_fd[i][j],encoded_data,size);
+				    /*if(write(socket_fd[i][j],encoded_data,size) == -1){
 				    	perror("connectman");
     					return;
-				    };
+				    };*/
 				    
 				   	close(socket_fd[i][j]);
         		}
@@ -182,37 +232,46 @@ void * connexion_manager(void *arg) {
    				pthread_exit(NULL);
             }
             
-            if(write(newSock, encodeed_message, strlen_message) == -1){
+            write_encoded_message(newSock,encodeed_message,strlen_message);
+            /*if(write(newSock, encodeed_message, strlen_message) == -1){
             	perror("connexion_manager");
    				pthread_exit(NULL);
-            }
+            }*/
             
             /*printf("%s\n",encodeed_message);*/
             printf("Recuperation of files...\n");
             free_data(data,nb);
-            int size;
-           
+            int size = -1;
+           	
            	if(read(newSock,&size,sizeof(int)) == -1){
            		perror("connexion_manager");
    				pthread_exit(NULL);
            	}
-           
-            char msg[size];
+           	/*printf("%d\n",size);*/
+            /*char msg[size];*/
+            char * msg;
+            if((msg = malloc(sizeof(char)*size)) == NULL){
+           		perror("connexion_manager");
+   				pthread_exit(NULL);
+           	}
             
-            if(read(newSock,msg,size) == -1){
+            read_encoded_message(newSock,msg,size);
+            /*if(read(newSock,msg,size) == -1){
             	perror("connexion_manager");
    				pthread_exit(NULL);
-            }
-            
-            data = decode(msg,&nb);
+            }*/
             /*printf("%s\n",msg);*/
             
+            data = decode(msg,&nb);
+            /*print_data(data,nb);*/
+            /*printf("OK\n");*/
             if(update_folder(data,nb) == -1){
             	perror("connexion_manager");
    				pthread_exit(NULL);
             }
             
             free_encoded_message(encodeed_message);
+            free(msg);
             free_data(data,nb);
             close(newSock);
         }

@@ -17,6 +17,7 @@ void print_data(Data * me_data,int size){
 	int i;	
 	for(i = 0; i<size; i++){
 		printf("Print nb %d:\t%s\n",i,me_data[i].path);
+		printf("%s\n\n",me_data[i].data);
 	}
 }
 
@@ -35,9 +36,9 @@ int get_mode(char * filename) {
 int update_folder(Data * data, int size){
 	int i = 0;
 	for(i = 0; i<size; i++){
-		if(!is_directory(data[i].path) && strncmp(data[i].data,"<<<<<DIRECTORY>>>>>",20) != 0){
+		if(!is_directory(data[i].path) && strncmp(data[i].data,"<<<<<DIRECTORY>>>>>",19) != 0){
 			int fd = creat(data[i].path,data[i].mode);
-			printf("%s\n",data[i].path);
+			printf("FILE : %s\n",data[i].path);
 			if(fd == -1){
 				perror("update_folder");
 				return EXIT_FAILURE;
@@ -49,7 +50,7 @@ int update_folder(Data * data, int size){
 			}
 			close(fd);
 		}else{
-			printf("%s\n",data[i].path);
+			printf("DIR : %s\n",data[i].path);
 			mkdir(data[i].path,data[i].mode);
 		}
 	
@@ -143,6 +144,7 @@ void get_data_from_file(const char * filename, char ** buffer) {
 		    	return;
 		}
     	strncpy(*buffer,"<<<<<DIRECTORY>>>>>",20);
+    	(*buffer)[19] = '\0';
     }
 }
 
