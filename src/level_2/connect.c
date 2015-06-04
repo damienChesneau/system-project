@@ -130,12 +130,11 @@ void connectman(char **tab_addr,int length) {
 				    /*printf("%s\n\n\n",messge);*/
 				    int length = -1;
 				    Data * data = decode(messge, &length);
-				    
+				    free_encoded_message(messge);
 				    /*print_data(me_data,nb_of_me_data);
 				    print_data(data,length);*/
 				    me_data = filter_and_replace(me_data, &nb_of_me_data, data, length);
 				    /*print_data(me_data,nb_of_me_data);*/
-				    free(messge);
 				    free_data(data,length);
 				} else {
 				    /*printf("not connected :( \n");*/
@@ -248,6 +247,7 @@ void * connexion_manager(void *arg) {
             /*printf("%s\n",msg);*/
             
             data = decode(msg,&nb);
+            free_encoded_message(msg);
             /*print_data(data,nb);*/
             /*printf("OK\n");*/
             if(update_folder(data,nb) == -1){
@@ -256,7 +256,6 @@ void * connexion_manager(void *arg) {
             }
             
             free_encoded_message(encodeed_message);
-            free(msg);
             free_data(data,nb);
             close(newSock);
         }
