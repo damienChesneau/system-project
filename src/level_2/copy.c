@@ -35,7 +35,7 @@ int get_mode(char * filename) {
 int update_folder(Data * data, int size){
 	int i = 0;
 	for(i = 0; i<size; i++){
-		if(!is_directory){
+		if(!is_directory(data[i].path) && strncmp(data[i].data,"<<<<<DIRECTORY>>>>>",20) != 0){
 			int fd = creat(data[i].path,data[i].mode);
 			printf("%s\n",data[i].path);
 			if(fd == -1){

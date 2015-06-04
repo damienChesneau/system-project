@@ -166,6 +166,7 @@ void * connexion_manager(void *arg) {
         
         if(read(newSock, buff, sizeof (buff)) == -1){
         	perror("connexion_manager");
+   			pthread_exit(NULL);
         }	
         
         if (strcmp(buff, firstmessage) == 0) {
@@ -178,10 +179,12 @@ void * connexion_manager(void *arg) {
             int strlen_message = strlen(encodeed_message)+1;
             if(write(newSock, &strlen_message, sizeof (int)) == -1){
             	perror("connexion_manager");
+   				pthread_exit(NULL);
             }
             
             if(write(newSock, encodeed_message, strlen_message) == -1){
             	perror("connexion_manager");
+   				pthread_exit(NULL);
             }
             
             /*printf("%s\n",encodeed_message);*/
@@ -191,12 +194,14 @@ void * connexion_manager(void *arg) {
            
            	if(read(newSock,&size,sizeof(int)) == -1){
            		perror("connexion_manager");
+   				pthread_exit(NULL);
            	}
            
             char msg[size];
             
             if(read(newSock,msg,size) == -1){
             	perror("connexion_manager");
+   				pthread_exit(NULL);
             }
             
             data = decode(msg,&nb);
@@ -204,6 +209,7 @@ void * connexion_manager(void *arg) {
             
             if(update_folder(data,nb) == -1){
             	perror("connexion_manager");
+   				pthread_exit(NULL);
             }
             
             free_encoded_message(encodeed_message);
@@ -221,11 +227,11 @@ void * switchman(void *arg) {
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (getSockAddr(port, &addr) == -1) {
         perror("GET SOCK ADDR");
-        return (void *) EXIT_FAILURE;
+   		pthread_exit(NULL);
     }
     if (setAcceptSocket(&addr, socket_fd) == -1) {
         perror("SET ACCEPT SOCK");
-        return (void *) EXIT_FAILURE;
+   		pthread_exit(NULL);
     }
 	
     printf("INITIALIZE SERVEUR IN PORT= %d\n", htons(addr.sin_port));
@@ -233,13 +239,14 @@ void * switchman(void *arg) {
     while (1) {
         printf("WAIT NEW CONNEXION...\n");
         if (listen(socket_fd, 5) == -1) {
-            printf("err\n");
+        	perror("switchman");
+   			pthread_exit(NULL);
         }
 
         int newSock = accept(socket_fd, NULL, NULL);
         if(newSock == -1){
         	perror("switchman");
-        	return (void*) EXIT_FAILURE;
+   			pthread_exit(NULL);
         }
         
         printf("Connect accepted by serveur\n");
@@ -247,7 +254,7 @@ void * switchman(void *arg) {
 		
         if (pthread_create(&new_manager, NULL, connexion_manager, (void*) (intptr_t) newSock) == -1) {
             perror("pthread_create");
-            return (void*) EXIT_FAILURE;
+   			pthread_exit(NULL);
         }
     }
     pthread_exit(NULL);
