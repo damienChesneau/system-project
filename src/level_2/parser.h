@@ -25,7 +25,6 @@ Data * decode(const char * data, int * nb);
 */
 char * encode(Data * data, int length);
 
-
 /*
 	Free an encoded message.
 */
