@@ -1,7 +1,5 @@
 #include "copy.h"
 
-int get_timestamp_of_file(char * filename);
-
 void print_data(Data * me_data,int size){
 	int i;	
 	for(i = 0; i<size; i++){
@@ -78,7 +76,7 @@ int count_dir_files(const char * dir) {
     return nbr;
 }
 
-char** get_all_files_from_dir(const char * dir, int * i, char ** files) {
+void get_all_files_from_dir(const char * dir, int * i, char ** files) {
     DIR * repertory = opendir(dir);
     if (!repertory) {
         perror("opendir() failed");
@@ -89,7 +87,7 @@ char** get_all_files_from_dir(const char * dir, int * i, char ** files) {
 				int len  = strlen(dir)+strlen(readedFile->d_name)+1;
 	            if((files[*i] = (char *)malloc(sizeof(char)*len)) == NULL){
 	            	perror("get_all_files_from_dir");
-	            	return NULL;
+	            	return;
 	            }
 				strncpy(files[*i],dir,len);
 	            strncat(files[*i],readedFile->d_name,len);
@@ -106,7 +104,6 @@ char** get_all_files_from_dir(const char * dir, int * i, char ** files) {
         }
     }
     closedir(repertory);
-    return NULL;
 }
 
 void get_data_from_file(const char * filename, char ** buffer) {
@@ -152,7 +149,7 @@ Data* get_data_form_dir(const char * dir, int * nb_of_datas) {
    		return NULL;
    	}
     char * files[count];
-    char** t = get_all_files_from_dir(new_dir, &i, files);
+    get_all_files_from_dir(new_dir, &i, files);
     for (i = 0; i < count; i++) {
         char * buffer;
         /*char tmp[PATH_SIZE]; 
