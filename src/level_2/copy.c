@@ -30,12 +30,12 @@ int update_folder(Data * data, int size){
 			printf("FILE : %s\n",data[i].path);
 			if(fd == -1){
 				perror("update_folder");
-				return EXIT_FAILURE;
+				return -1;
 			}
 		
 			if(write(fd,data[i].data,strlen(data[i].data)) == -1){
 				perror("update_folder");
-				return EXIT_FAILURE;
+				return -1;
 			}
 			close(fd);
 		}else{
@@ -45,7 +45,7 @@ int update_folder(Data * data, int size){
 	
 	}	
 	
-	return EXIT_SUCCESS;
+	return 1;
 }
 
 int count_dir_files(const char * dir) {

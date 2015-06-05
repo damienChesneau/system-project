@@ -72,6 +72,7 @@ void connectman(char **tab_addr,int length) {
 	/*printf("OK\n");*/
     if(inet_aton("127.0.0.1",&local) == -1){
     	perror("connectman");
+		free_data(me_data,nb_of_me_data);
     	return;
     }
     
@@ -88,33 +89,39 @@ void connectman(char **tab_addr,int length) {
 			/*printf("OK\n");*/
 		    if((socket_fd[i][j] = socket(AF_INET, SOCK_STREAM, 0)) == -1){
 		    	perror("connectman");
+				free_data(me_data,nb_of_me_data);
 		    	return;
 		    }
 		    
 		    if (getSockAddr(PORT+j, &(addr[i][j])) == -1) {
 		        perror("GET SOCK ADDR");
+				free_data(me_data,nb_of_me_data);
 		        return;
 		    }
 			
 			/*printf("OK\n");*/
 		    if (inet_aton(tab_addr[i], &(addr[i][j].sin_addr.s_addr)) == 0) {
 		        perror("connectman");
+				free_data(me_data,nb_of_me_data);
 		        return;
 		    }
         	
         	while(port_now == -1);
+        	
         	if((addr[i][j].sin_addr.s_addr != INADDR_LOOPBACK && addr[i][j].sin_addr.s_addr != local.s_addr) || htons(addr[i][j].sin_port) != port_now){
 				if ((connect_ret[i][j] = connect(socket_fd[i][j], (struct sockaddr *) &(addr[i][j]), sizeof (struct sockaddr))) != -1) {
 				    printf("Connected to %d\n", socket_fd[i][j]);
 				    
 				    if(write(socket_fd[i][j], firstmessage, strlen(firstmessage)) == -1){
 				    	perror("connectman");
+						free_data(me_data,nb_of_me_data);
     					return;
 				    }
 				    /*printf("OK\n");*/
 				    int strlen_message = -1;
 				    if (read(socket_fd[i][j], &strlen_message, sizeof (int)) == -1) {
 				        perror("connectman");
+						free_data(me_data,nb_of_me_data);
     					return;
 				    }
 				    
@@ -122,12 +129,14 @@ void connectman(char **tab_addr,int length) {
 				    char * messge;
 				    if((messge = malloc(sizeof(char)*strlen_message)) == NULL){
 				        perror("connectman");
+						free_data(me_data,nb_of_me_data);
     					return;
 				    }
 				   	/*printf("OK\n");*/
 				    /*if(read(socket_fd[i][j], &messge, strlen_message) == -1){*/
 				   	if(read_encoded_message(socket_fd[i][j],messge,strlen_message) == -1){
-				    	perror("connectman");
+				   		free_encoded_message(messge);
+						free_data(me_data,nb_of_me_data);
     					return;
 				    }
 				   
@@ -165,9 +174,7 @@ void connectman(char **tab_addr,int length) {
 				   	
 				    /*printf("OK\n");*/
 				    /*if(write(socket_fd[i][j],encoded_data,size) == -1){*/
-            		if(write_encoded_message(socket_fd[i][j],encoded_data,size) == -1){
-				    	perror("connectman");
-				    };
+            		write_encoded_message(socket_fd[i][j],encoded_data,size);
 				    
 				   	close(socket_fd[i][j]);
         		}
@@ -183,6 +190,7 @@ void connectman(char **tab_addr,int length) {
 	/*printf("OK\n");*/
 	if(update_folder(me_data,nb_of_me_data) == -1){
 		perror("connectman");
+		free_data(me_data,nb_of_me_data);
     	return;
 	}
 	
@@ -216,12 +224,13 @@ void * connexion_manager(void *arg) {
             int strlen_message = strlen(encodeed_message)+1;
             if(write(newSock, &strlen_message, sizeof (int)) == -1){
             	perror("connexion_manager");
+            	free_encoded_message(encodeed_message);
    				pthread_exit(NULL);
             }
             
             /*if(write(newSock, encodeed_message, strlen_message) == -1){*/
             if(write_encoded_message(newSock,encodeed_message,strlen_message) == -1){
-            	perror("connexion_manager");
+            	free_encoded_message(encodeed_message);
    				pthread_exit(NULL);
             }
             
@@ -244,7 +253,7 @@ void * connexion_manager(void *arg) {
             
             /*if(read(newSock,msg,size) == -1){*/
             if(read_encoded_message(newSock,msg,size) == -1){
-            	perror("connexion_manager");
+            	free_encoded_message(msg);
    				pthread_exit(NULL);
             }
             /*printf("%s\n",msg);*/
@@ -255,6 +264,7 @@ void * connexion_manager(void *arg) {
             /*printf("OK\n");*/
             if(update_folder(data,nb) == -1){
             	perror("connexion_manager");
+            	free_data(data,nb);
    				pthread_exit(NULL);
             }
             
