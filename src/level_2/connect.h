@@ -18,8 +18,8 @@ const char* firstmessage = "Hello, I want all your data please :)";*/
 
 int setAcceptSocket(struct sockaddr_in* serv, int socket_fd);
 int getSockAddr(int port, struct sockaddr_in* serv);
-void write_encoded_message(int fd,char * message,int length);
-void read_encoded_message(int fd,char * message,int length);
+int write_encoded_message(int fd,char * message,int length);
+int read_encoded_message(int fd,char * message,int length);
 void connectman(char **tab_addr,int length);
 void * connexion_manager(void *arg);
 void * switchman(void *arg);

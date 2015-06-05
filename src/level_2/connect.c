@@ -3,7 +3,7 @@
 int port_now = -1;
 const char* firstmessage = "Hello, I want all your data please :)";
 
-void write_encoded_message(int fd,char * message,int length){
+int write_encoded_message(int fd,char * message,int length){
 	int nb_pack = length / PACK_SIZE;
 	int last_pack = length % PACK_SIZE;
 	int i;
@@ -12,23 +12,25 @@ void write_encoded_message(int fd,char * message,int length){
 	for( i = 0; i<nb_pack; i++){
 		if((written = write(fd, message + (i*PACK_SIZE), PACK_SIZE)) == -1){
 			perror("write_encoded_message");
-			return;
+			return -1;
 		}
 		nb_writes += written;
 	}
 	
 	if((written = write(fd, message + (i*PACK_SIZE), last_pack)) == -1){
 		perror("write_encoded_message");
-		return;
+		return -1;
 	}
 	nb_writes += written;
 	
 	if(nb_writes != length){
 		printf("Error, all data hasn't been uploaded\n");
+		return -1;
 	}
+	return 1;
 }
 
-void read_encoded_message(int fd,char * message,int length){
+int read_encoded_message(int fd,char * message,int length){
 	int nb_pack = length / PACK_SIZE;
 	int last_pack = length % PACK_SIZE;
 	int i;
@@ -37,20 +39,22 @@ void read_encoded_message(int fd,char * message,int length){
 	for( i = 0; i<nb_pack; i++){
 		if((readed = read(fd, message + (i*PACK_SIZE), PACK_SIZE)) == -1){
 			perror("read_encoded_message");
-			return;
+			return -1;
 		}
 		nb_reads += readed;
 	}
 	
 	if((readed = read(fd, message + (i*PACK_SIZE), last_pack)) == -1){
 		perror("read_encoded_message");
-		return;
+		return -1;
 	}
 	nb_reads += readed;
 	
 	if(nb_reads != length){
 		printf("Error, all data hasn't been downloaded\n");
+		return -1;
 	}
+	return 1;
 }
 
 void connectman(char **tab_addr,int length) {
@@ -93,13 +97,13 @@ void connectman(char **tab_addr,int length) {
 		    }
 			
 			/*printf("OK\n");*/
-		    if (inet_aton(tab_addr[i], &(addr[i][j].sin_addr.s_addr)) == -1) {
+		    if (inet_aton(tab_addr[i], &(addr[i][j].sin_addr.s_addr)) == 0) {
 		        perror("connectman");
 		        return;
 		    }
         	
         	while(port_now == -1);
-        	if(addr[i][j].sin_addr.s_addr != local.s_addr || htons(addr[i][j].sin_port) != port_now){
+        	if((addr[i][j].sin_addr.s_addr != INADDR_LOOPBACK && addr[i][j].sin_addr.s_addr != local.s_addr) || htons(addr[i][j].sin_port) != port_now){
 				if ((connect_ret[i][j] = connect(socket_fd[i][j], (struct sockaddr *) &(addr[i][j]), sizeof (struct sockaddr))) != -1) {
 				    printf("Connected to %d\n", socket_fd[i][j]);
 				    
@@ -121,11 +125,11 @@ void connectman(char **tab_addr,int length) {
     					return;
 				    }
 				   	/*printf("OK\n");*/
-				   	read_encoded_message(socket_fd[i][j],messge,strlen_message);
-				    /*if(read(socket_fd[i][j], &messge, strlen_message) == -1){
+				    /*if(read(socket_fd[i][j], &messge, strlen_message) == -1){*/
+				   	if(read_encoded_message(socket_fd[i][j],messge,strlen_message) == -1){
 				    	perror("connectman");
     					return;
-				    }*/
+				    }
 				   
 				    /*printf("%s\n\n\n",messge);*/
 				    int length = -1;
@@ -152,20 +156,18 @@ void connectman(char **tab_addr,int length) {
         for(j = 0; j<=PORT_OFFSET; j++){
         
         	if(connect_ret[i][j] != -1){
-        		if(addr[i][j].sin_addr.s_addr != local.s_addr || htons(addr[i][j].sin_port) != port_now){
+        		if((addr[i][j].sin_addr.s_addr != INADDR_LOOPBACK && addr[i][j].sin_addr.s_addr != local.s_addr) || htons(addr[i][j].sin_port) != port_now){
 				    
 				    /*printf("OK\n");*/
 				    if(write(socket_fd[i][j],&size,sizeof(int)) == -1){
 				    	perror("connectman");
-    					return;
 				   	}
 				   	
 				    /*printf("OK\n");*/
-            		write_encoded_message(socket_fd[i][j],encoded_data,size);
-				    /*if(write(socket_fd[i][j],encoded_data,size) == -1){
+				    /*if(write(socket_fd[i][j],encoded_data,size) == -1){*/
+            		if(write_encoded_message(socket_fd[i][j],encoded_data,size) == -1){
 				    	perror("connectman");
-    					return;
-				    };*/
+				    };
 				    
 				   	close(socket_fd[i][j]);
         		}
@@ -217,11 +219,11 @@ void * connexion_manager(void *arg) {
    				pthread_exit(NULL);
             }
             
-            write_encoded_message(newSock,encodeed_message,strlen_message);
-            /*if(write(newSock, encodeed_message, strlen_message) == -1){
+            /*if(write(newSock, encodeed_message, strlen_message) == -1){*/
+            if(write_encoded_message(newSock,encodeed_message,strlen_message) == -1){
             	perror("connexion_manager");
    				pthread_exit(NULL);
-            }*/
+            }
             
             free_encoded_message(encodeed_message);
             /*printf("%s\n",encodeed_message);*/
@@ -240,11 +242,11 @@ void * connexion_manager(void *arg) {
    				pthread_exit(NULL);
            	}
             
-            read_encoded_message(newSock,msg,size);
-            /*if(read(newSock,msg,size) == -1){
+            /*if(read(newSock,msg,size) == -1){*/
+            if(read_encoded_message(newSock,msg,size) == -1){
             	perror("connexion_manager");
    				pthread_exit(NULL);
-            }*/
+            }
             /*printf("%s\n",msg);*/
             
             data = decode(msg,&nb);
@@ -307,12 +309,12 @@ void * switchman(void *arg) {
 
 int getSockAddr(int port, struct sockaddr_in* serv) {
     if (port <= 1024) {
-        return EXIT_FAILURE;
+        return -1;
     }
     serv->sin_family = AF_INET;
     serv->sin_port = htons(port);
     serv->sin_addr.s_addr = INADDR_ANY;
-    return EXIT_SUCCESS;
+    return 1;
 }
 
 int setAcceptSocket(struct sockaddr_in* serv, int socket_fd) {
@@ -324,17 +326,17 @@ int setAcceptSocket(struct sockaddr_in* serv, int socket_fd) {
 	if(error == -1){
 		port_now = 0;
         perror("getSockAddr");
-        return EXIT_FAILURE;
+        return -1;
     }
 	
     if (listen(socket_fd, PORT) == -1) {
     	port_now = 0;
         perror("getSockAddr");
-        return EXIT_FAILURE;
+        return -1;
     }
     
     port_now = htons(serv->sin_port);
     
-    return EXIT_SUCCESS;
+    return 1;
 }
 
